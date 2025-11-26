@@ -188,37 +188,6 @@
             padding: 20px;
             color: #dc3545;
         }
-        
-        .token-setup {
-            background: #fff3cd;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            border-left: 4px solid #ffc107;
-        }
-        
-        .token-input-group {
-            margin: 15px 0;
-        }
-        
-        .token-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 14px;
-        }
-        
-        .btn-save-token {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
@@ -226,29 +195,6 @@
         <div class="header">
             <h1>📱 设备授权申请</h1>
             <p>填写信息，提交后联系管理员开通</p>
-        </div>
-
-        <!-- Token设置区域 -->
-        <div id="tokenSetup" class="token-setup">
-            <h3>🔐 GitHub Token 设置</h3>
-            <p>需要配置GitHub Token来访问私有仓库数据</p>
-            
-            <div class="token-input-group">
-                <label>GitHub Personal Access Token:</label>
-                <input type="password" id="githubToken" class="token-input" 
-                       placeholder="输入您的GitHub Personal Access Token">
-                <button class="btn-save-token" onclick="saveToken()">保存Token</button>
-            </div>
-            
-            <div class="help-text">
-                <strong>如何获取Token:</strong>
-                <ol>
-                    <li>访问 GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)</li>
-                    <li>点击 "Generate new token"</li>
-                    <li>设置权限：选择 "repo" 权限</li>
-                    <li>生成后复制token并粘贴到上方输入框</li>
-                </ol>
-            </div>
         </div>
         
         <!-- 快速操作 -->
@@ -323,11 +269,9 @@
     </div>
 
     <script>
-        // 配置 - 私有仓库访问
+        // 配置 - 修改为访问本地文件
         const CONFIG = {
-            // 使用GitHub API访问私有仓库
-            GITHUB_API_URL: 'https://api.github.com/repos/xiaolong-nihao/tv-service-config/contents/devices.json',
-            // 将 YOUR_USERNAME 替换为您的GitHub用户名
+            DEVICES_JSON_URL: './devices.json', // 改为本地文件路径
             CACHE_ENABLED: true,
             CACHE_TIME: 5 * 60 * 1000
         };
@@ -338,47 +282,11 @@
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             console.log('设备授权申请页面初始化');
+            console.log('数据源:', CONFIG.DEVICES_JSON_URL);
             
-            // 检查是否已保存Token
-            const savedToken = localStorage.getItem('github_token');
-            if (savedToken) {
-                document.getElementById('tokenSetup').style.display = 'none';
-                CONFIG.GITHUB_TOKEN = savedToken;
-                preloadDevicesData();
-            } else {
-                document.getElementById('tokenSetup').style.display = 'block';
-            }
-        });
-        
-        // 保存Token
-        function saveToken() {
-            const tokenInput = document.getElementById('githubToken');
-            const token = tokenInput.value.trim();
-            
-            if (!token) {
-                alert('请输入GitHub Token');
-                return;
-            }
-            
-            // 保存到本地存储
-            localStorage.setItem('github_token', token);
-            CONFIG.GITHUB_TOKEN = token;
-            
-            // 隐藏Token设置区域
-            document.getElementById('tokenSetup').style.display = 'none';
-            
-            // 预加载数据
+            // 预加载设备数据
             preloadDevicesData();
-            
-            alert('Token保存成功！');
-        }
-        
-        // 清除Token（用于调试）
-        function clearToken() {
-            localStorage.removeItem('github_token');
-            CONFIG.GITHUB_TOKEN = null;
-            location.reload();
-        }
+        });
         
         // 预加载设备数据
         async function preloadDevicesData() {
@@ -387,12 +295,10 @@
                 console.log('设备数据预加载成功');
             } catch (error) {
                 console.log('设备数据预加载失败:', error);
-                // 显示错误信息
-                showTokenError(error.message);
             }
         }
         
-        // 获取设备数据 - 支持私有仓库
+        // 获取设备数据 - 从本地文件
         async function fetchDevicesData() {
             const now = Date.now();
             
@@ -402,72 +308,24 @@
             }
             
             try {
-                const headers = {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'User-Agent': 'Device-Management-App'
-                };
-                
-                // 如果配置了token，添加到请求头
-                if (CONFIG.GITHUB_TOKEN) {
-                    headers['Authorization'] = `token ${CONFIG.GITHUB_TOKEN}`;
-                } else {
-                    throw new Error('未配置GitHub Token');
-                }
-                
-                const response = await fetch(CONFIG.GITHUB_API_URL + '?t=' + now, {
-                    headers: headers
-                });
-                
+                const response = await fetch(CONFIG.DEVICES_JSON_URL + '?t=' + now);
                 if (!response.ok) {
-                    if (response.status === 401) {
-                        throw new Error('Token无效或已过期，请重新生成');
-                    } else if (response.status === 403) {
-                        throw new Error('访问被拒绝，可能达到API限制或权限不足');
-                    } else if (response.status === 404) {
-                        throw new Error('文件不存在，请检查仓库路径和文件名');
-                    }
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
-                const result = await response.json();
-                
-                // GitHub API返回的是base64编码的内容
-                if (result.content && result.encoding === 'base64') {
-                    const decodedContent = atob(result.content.replace(/\n/g, ''));
-                    const data = JSON.parse(decodedContent);
-                    devicesData = data;
-                    lastFetchTime = now;
-                    return data;
-                } else {
-                    throw new Error('无法解析文件内容');
-                }
+                const data = await response.json();
+                devicesData = data;
+                lastFetchTime = now;
+                return data;
                 
             } catch (error) {
                 throw new Error('无法加载设备数据: ' + error.message);
             }
         }
-        
-        // 显示Token错误
-        function showTokenError(message) {
-            const tokenSetup = document.getElementById('tokenSetup');
-            tokenSetup.innerHTML = `
-                <h3>🔐 Token 错误</h3>
-                <div class="error">${message}</div>
-                <button class="btn-save-token" onclick="clearToken()">重新设置Token</button>
-            `;
-            tokenSetup.style.display = 'block';
-        }
 
         // 表单提交处理
         document.getElementById('deviceForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            // 检查Token是否配置
-            if (!CONFIG.GITHUB_TOKEN) {
-                alert('请先配置GitHub Token');
-                document.getElementById('tokenSetup').style.display = 'block';
-                return;
-            }
             
             const formData = new FormData(this);
             const application = {
@@ -537,13 +395,6 @@
 
         // 检查设备状态
         async function checkDeviceStatus() {
-            // 检查Token是否配置
-            if (!CONFIG.GITHUB_TOKEN) {
-                alert('请先配置GitHub Token');
-                document.getElementById('tokenSetup').style.display = 'block';
-                return;
-            }
-            
             const deviceId = document.getElementById('device_id').value.trim();
             const statusResult = document.getElementById('statusResult');
             
@@ -741,4 +592,3 @@ ${!isExpired ? `剩余天数：${daysRemaining}天` : '状态：已过期'}
     </script>
 </body>
 </html>
-
