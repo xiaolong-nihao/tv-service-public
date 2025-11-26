@@ -170,6 +170,11 @@
             color: #856404;
         }
         
+        .status-permanent {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+        
         .quick-actions {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -247,6 +252,7 @@
                     <option value="monthly">⭐ 月卡 (30天)</option>
                     <option value="quarterly">🌟🌟 季卡 (90天)</option>
                     <option value="yearly">🌟🌟🌟 年卡 (365天)</option>
+                    <option value="permanent">🏆 永久授权</option>
                 </select>
             </div>
             
@@ -353,7 +359,8 @@
                 'trial': '7天体验卡',
                 'monthly': '月卡',
                 'quarterly': '季卡', 
-                'yearly': '年卡'
+                'yearly': '年卡',
+                'permanent': '永久授权'
             };
             
             const applicationText = `【设备授权申请】
@@ -408,26 +415,46 @@
             try {
                 const data = await fetchDevicesData();
                 const devices = data.authorized_devices || [];
-                const device = devices.find(d => d.device_id === deviceId);
+                
+                // 适配新的数据结构（对象数组格式）
+                let device;
+                if (Array.isArray(devices) && devices.length > 0) {
+                    // 如果是对象数组 [{id: "...", expire: "..."}]
+                    if (typeof devices[0] === 'object' && devices[0].id) {
+                        device = devices.find(d => d.id === deviceId);
+                    } 
+                    // 如果是字符串数组 ["id1", "id2"]
+                    else if (typeof devices[0] === 'string') {
+                        device = devices.includes(deviceId) ? { id: deviceId } : null;
+                    }
+                }
                 
                 let statusHtml = '';
                 
                 if (device) {
-                    const isExpired = new Date(device.expire_date) < new Date();
-                    const daysRemaining = Math.ceil((new Date(device.expire_date) - new Date()) / (1000 * 60 * 60 * 24));
+                    const isPermanent = device.expire === '永久' || device.package === 'permanent';
+                    const isExpired = !isPermanent && device.expire && new Date(device.expire) < new Date();
+                    const daysRemaining = isPermanent ? '永久' : (device.expire ? Math.ceil((new Date(device.expire) - new Date()) / (1000 * 60 * 60 * 24)) : '未知');
+                    
+                    let statusClass = 'status-active';
+                    let statusText = '✅ 授权有效';
+                    
+                    if (isPermanent) {
+                        statusClass = 'status-permanent';
+                        statusText = '🏆 永久授权';
+                    } else if (isExpired) {
+                        statusClass = 'status-expired';
+                        statusText = '❌ 已过期';
+                    }
                     
                     statusHtml = `
-                        <div class="device-status ${isExpired ? 'status-expired' : 'status-active'}">
-                            ${isExpired ? '❌ 已过期' : '✅ 授权有效'}
+                        <div class="device-status ${statusClass}">
+                            ${statusText}
                         </div>
                         <div class="application-data">
-设备ID：${device.device_id}
-用户：${device.owner}
-联系方式：${device.contact}
-套餐：${device.package}
-激活日期：${device.activate_date}
-到期日期：${device.expire_date}
-${!isExpired ? `剩余天数：${daysRemaining}天` : '状态：已过期'}
+设备ID：${device.id}
+${device.expire ? `到期日期：${device.expire}` : '授权类型：永久'}
+${!isPermanent && !isExpired ? `剩余天数：${daysRemaining}天` : ''}
                         </div>
                     `;
                 } else {
@@ -475,7 +502,8 @@ ${!isExpired ? `剩余天数：${daysRemaining}天` : '状态：已过期'}
                             'trial': '7天体验卡',
                             'monthly': '月卡',
                             'quarterly': '季卡', 
-                            'yearly': '年卡'
+                            'yearly': '年卡',
+                            'permanent': '永久授权'
                         };
                         
                         html += `
@@ -520,7 +548,8 @@ ${!isExpired ? `剩余天数：${daysRemaining}天` : '状态：已过期'}
                         'trial': '7天体验卡',
                         'monthly': '月卡',
                         'quarterly': '季卡', 
-                        'yearly': '年卡'
+                        'yearly': '年卡',
+                        'permanent': '永久授权'
                     };
                     
                     const applicationText = `【设备授权申请】
