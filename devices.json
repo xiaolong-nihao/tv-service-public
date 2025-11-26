@@ -1,0 +1,27 @@
+
+{
+  "version": "1.0",
+  "last_update": "2024-01-15",
+  "authorized_devices": [
+    {
+      "device_id": "TV123456789",
+      "device_type": "tv",
+      "owner": "张三",
+      "contact": "13800138000",
+      "package": "yearly",
+      "activate_date": "2024-01-01",
+      "expire_date": "2024-12-31",
+      "status": "active"
+    },
+    {
+      "device_id": "865123456789012",
+      "device_type": "mobile", 
+      "owner": "李四",
+      "contact": "13900139000",
+      "package": "monthly",
+      "activate_date": "2024-01-10",
+      "expire_date": "2024-02-09",
+      "status": "active"
+    }
+  ]
+}

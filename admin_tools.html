@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设备管理大师</title>
+    
+    <!-- PWA基础配置 -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="设备管理">
+    <meta name="description" content="专业的设备授权管理系统">
+    <meta name="keywords" content="设备管理,授权系统,PWA">
+    
+    <!-- PWA清单 -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- 苹果图标 -->
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- 样式 -->
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            padding: 0;
+        }
+        
+        .app-container {
+            background: white;
+            min-height: 100vh;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        
+        .app-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+        }
+        
+        .app-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .app-header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 15px;
+            background: var(--light-color);
+        }
+        
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .section {
+            margin: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .section h3 {
+            margin-bottom: 15px;
+            color: var(--dark-color);
+            border-bottom: 2px solid var(--light-color);
+            padding-bottom: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        
+        .device-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .device-item {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .device-item:last-child {
+            border-bottom: none;
+        }
+        
+        .device-info {
+            flex: 1;
+        }
+        
+        .device-id {
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .device-meta {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: var(--danger-color);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        
+        .install-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+        }
+        
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+                background: #f5f5f5;
+            }
+            
+            .app-container {
+                max-width: 400px;
+                margin: 0 auto;
+                min-height: calc(100vh - 40px);
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 头部 -->
+        <header class="app-header">
+            <h1>📱 设备管理大师</h1>
+            <p>专业设备授权管理系统</p>
+        </header>
+        
+        <!-- 快速操作 -->
+        <div class="quick-actions">
+            <button class="btn btn-primary" onclick="loadDeviceList()">
+                🔄 刷新列表
+            </button>
+            <button class="btn btn-success" onclick="showAddForm()">
+                ➕ 添加设备
+            </button>
+        </div>
+        
+        <!-- 设备列表 -->
+        <div class="section">
+            <h3>📋 设备列表</h3>
+            <div id="deviceList" class="device-list">
+                <div class="loading">
+                    ⏳ 加载中...
+                </div>
+            </div>
+        </div>
+        
+        <!-- 添加设备表单 -->
+        <div id="addForm" class="section" style="display: none;">
+            <h3>➕ 添加新设备</h3>
+            <div class="form-group">
+                <label>设备ID：</label>
+                <input type="text" id="newDeviceId" class="form-control" placeholder="输入设备序列号或IMEI">
+            </div>
+            <div class="form-group">
+                <label>用户姓名：</label>
+                <input type="text" id="newOwner" class="form-control" placeholder="输入用户姓名">
+            </div>
+            <div class="form-group">
+                <label>联系方式：</label>
+                <input type="text" id="newContact" class="form-control" placeholder="手机号或微信号">
+            </div>
+            <div class="form-group">
+                <label>套餐类型：</label>
+                <select id="newPackage" class="form-control">
+                    <option value="trial">🎁 体验卡 (7天)</option>
+                    <option value="monthly">⭐ 月卡 (30天)</option>
+                    <option value="quarterly">🌟🌟 季卡 (90天)</option>
+                    <option value="yearly">🌟🌟🌟 年卡 (365天)</option>
+                </select>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn btn-success" onclick="addDevice()">确认添加</button>
+                <button class="btn btn-primary" onclick="hideAddForm()" style="background: #6c757d;">取消</button>
+            </div>
+        </div>
+        
+        <!-- 统计信息 -->
+        <div class="section">
+            <h3>📊 统计信息</h3>
+            <div id="statsInfo">
+                <div class="loading">加载统计信息...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 安装按钮 -->
+    <button id="installBtn" class="install-btn" title="安装APP">📱</button>
+
+    <script>
+        // 配置
+        const CONFIG = {
+            DEVICES_JSON_URL: 'https://gitee.com/你的用户名/你的仓库/raw/master/devices.json',
+            CACHE_ENABLED: true
+        };
+        
+        // 安装PWA相关变量
+        let deferredPrompt;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('设备管理APP初始化...');
+            
+            // 注册Service Worker
+            registerServiceWorker();
+            
+            // 监听安装提示
+            setupInstallPrompt();
+            
+            // 加载设备列表
+            loadDeviceList();
+            
+            // 加载统计信息
+            loadStats();
+        });
+        
+        // 注册Service Worker
+        async function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.worker.register('/sw.js');
+                    console.log('Service Worker 注册成功:', registration);
+                    
+                    // 检查更新
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        console.log('发现新版本 Service Worker');
+                    });
+                    
+                } catch (error) {
+                    console.log('Service Worker 注册失败:', error);
+                }
+            }
+        }
+        
+        // 设置安装提示
+        function setupInstallPrompt() {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                
+                // 显示安装按钮
+                const installBtn = document.getElementById('installBtn');
+                installBtn.style.display = 'block';
+                
+                installBtn.addEventListener('click', async () => {
+                    installBtn.style.display = 'none';
+                    deferredPrompt.prompt();
+                    
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`用户响应: ${outcome}`);
+                    deferredPrompt = null;
+                });
+            });
+            
+            // 监听安装完成
+            window.addEventListener('appinstalled', () => {
+                console.log('PWA已安装');
+                document.getElementById('installBtn').style.display = 'none';
+                deferredPrompt = null;
+            });
+        }
+        
+        // 加载设备列表
+        async function loadDeviceList() {
+            const deviceList = document.getElementById('deviceList');
+            deviceList.innerHTML = '<div class="loading">⏳ 加载中...</div>';
+            
+            try {
+                const response = await fetch(CONFIG.DEVICES_JSON_URL + '?t=' + Date.now());
+                if (!response.ok) throw new Error('网络请求失败');
+                
+                const data = await response.json();
+                displayDeviceList(data.authorized_devices);
+                
+            } catch (error) {
+                console.error('加载设备列表失败:', error);
+                deviceList.innerHTML = `
+                    <div class="error">
+                        ❌ 加载失败: ${error.message}
+                        <br><br>
+                        <button class="btn btn-primary" onclick="loadDeviceList()">重试</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // 显示设备列表
+        function displayDeviceList(devices) {
+            const deviceList = document.getElementById('deviceList');
+            
+            if (!devices || devices.length === 0) {
+                deviceList.innerHTML = `
+                    <div class="empty-state">
+                        📭 暂无设备
+                        <br>
+                        <small>点击"添加设备"开始管理</small>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            devices.forEach(device => {
+                const isExpired = new Date(device.expire_date) < new Date();
+                const daysRemaining = Math.ceil((new Date(device.expire_date) - new Date()) / (1000 * 60 * 60 * 24));
+                
+                html += `
+                    <div class="device-item">
+                        <div class="device-info">
+                            <div class="device-id">${device.device_id}</div>
+                            <div class="device-meta">
+                                👤 ${device.owner} • 📞 ${device.contact}
+                                <br>
+                                ⏰ 到期: ${device.expire_date}
+                                ${!isExpired ? ` • 剩余: ${daysRemaining}天` : ''}
+                            </div>
+                        </div>
+                        <span class="status-badge ${isExpired ? 'status-expired' : 'status-active'}">
+                            ${isExpired ? '已过期' : '有效'}
+                        </span>
+                    </div>
+                `;
+            });
+            
+            deviceList.innerHTML = html;
+        }
+        
+        // 加载统计信息
+        async function loadStats() {
+            try {
+                const response = await fetch(CONFIG.DEVICES_JSON_URL + '?t=' + Date.now());
+                const data = await response.json();
+                const devices = data.authorized_devices || [];
+                
+                const total = devices.length;
+                const active = devices.filter(d => new Date(d.expire_date) >= new Date()).length;
+                const expired = total - active;
+                
+                document.getElementById('statsInfo').innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
+                        <div style="padding: 10px; background: #e3f2fd; border-radius: 8px;">
+                            <div style="font-size: 1.5rem; font-weight: bold;">${total}</div>
+                            <div style="font-size: 0.8rem;">总设备</div>
+                        </div>
+                        <div style="padding: 10px; background: #e8f5e8; border-radius: 8px;">
+                            <div style="font-size: 1.5rem; font-weight: bold;">${active}</div>
+                            <div style="font-size: 0.8rem;">有效设备</div>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                document.getElementById('statsInfo').innerHTML = '<div class="error">统计加载失败</div>';
+            }
+        }
+        
+        // 显示添加表单
+        function showAddForm() {
+            document.getElementById('addForm').style.display = 'block';
+            // 滚动到表单
+            document.getElementById('addForm').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 隐藏添加表单
+        function hideAddForm() {
+            document.getElementById('addForm').style.display = 'none';
+            // 清空表单
+            document.getElementById('newDeviceId').value = '';
+            document.getElementById('newOwner').value = '';
+            document.getElementById('newContact').value = '';
+        }
+        
+        // 添加设备
+        function addDevice() {
+            const deviceId = document.getElementById('newDeviceId').value.trim();
+            const owner = document.getElementById('newOwner').value.trim();
+            const contact = document.getElementById('newContact').value.trim();
+            const packageType = document.getElementById('newPackage').value;
+            
+            if (!deviceId) {
+                alert('请输入设备ID');
+                return;
+            }
+            
+            if (!owner) {
+                alert('请输入用户姓名');
+                return;
+            }
+            
+            const newDevice = {
+                device_id: deviceId,
+                owner: owner,
+                contact: contact || '未提供',
+                package: packageType,
+                activate_date: new Date().toISOString().split('T')[0],
+                expire_date: calculateExpireDate(packageType),
+                status: 'active'
+            };
+            
+            // 生成设备信息供手动添加到JSON
+            const deviceInfo = `请手动将以下设备添加到 devices.json 文件中：\n\n${JSON.stringify(newDevice, null, 2)}`;
+            
+            // 复制到剪贴板
+            copyToClipboard(deviceInfo);
+            
+            alert(`✅ 设备信息已复制到剪贴板！\n\n请更新Gitee上的devices.json文件，然后点击"刷新列表"。`);
+            
+            hideAddForm();
+            // 延迟刷新，给你时间更新文件
+            setTimeout(loadDeviceList, 2000);
+        }
+        
+        // 计算到期日期
+        function calculateExpireDate(packageType) {
+            const today = new Date();
+            const durations = {
+                'trial': 7,
+                'monthly': 30,
+                'quarterly': 90,
+                'yearly': 365
+            };
+            
+            const days = durations[packageType] || 30;
+            today.setDate(today.getDate() + days);
+            return today.toISOString().split('T')[0];
+        }
+        
+        // 复制到剪贴板
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text);
+            } else {
+                // 兼容方案
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                } catch (err) {
+                    console.error('复制失败:', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+        
+        // 离线检测
+        window.addEventListener('online', () => {
+            console.log('网络连接恢复');
+            loadDeviceList();
+        });
+        
+        window.addEventListener('offline', () => {
+            console.log('网络连接断开');
+        });
+    </script>
+</body>
+</html>

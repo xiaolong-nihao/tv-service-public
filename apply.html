@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>设备授权申请</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .btn-copy {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .required::after {
+            content: " *";
+            color: red;
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .application-data {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 设备授权申请</h1>
+            <p>填写信息，提交后联系管理员开通</p>
+        </div>
+        
+        <form id="deviceForm">
+            <div class="form-group">
+                <label class="required">您的姓名：</label>
+                <input type="text" name="owner" placeholder="请输入真实姓名" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="required">联系方式：</label>
+                <input type="text" name="contact" placeholder="手机号或微信号" required>
+                <div class="help-text">用于服务通知和续费提醒</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="required">设备类型：</label>
+                <select name="device_type" required>
+                    <option value="">请选择设备类型</option>
+                    <option value="tv">电视</option>
+                    <option value="tv_box">电视盒子</option>
+                    <option value="mobile">手机</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="required">设备识别码：</label>
+                <input type="text" name="device_id" placeholder="请输入设备序列号或IMEI" required>
+                <div class="help-text">
+                    📺 电视：查看机身背面标签或系统设置中的"序列号"<br>
+                    📱 手机：拨号界面输入 <code>*#06#</code> 获取IMEI<br>
+                    📦 盒子：查看机身底部标签的"序列号"
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="required">套餐选择：</label>
+                <select name="package" required>
+                    <option value="trial">🎁 7天体验卡 (免费体验)</option>
+                    <option value="monthly">⭐ 月卡 (30天)</option>
+                    <option value="quarterly">🌟🌟 季卡 (90天)</option>
+                    <option value="yearly">🌟🌟🌟 年卡 (365天)</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn-submit">生成申请信息</button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('deviceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const application = {
+                owner: formData.get('owner'),
+                contact: formData.get('contact'),
+                device_type: formData.get('device_type'),
+                device_id: formData.get('device_id'),
+                package: formData.get('package'),
+                apply_date: new Date().toLocaleString('zh-CN'),
+                application_id: generateApplicationId()
+            };
+            
+            // 显示申请结果
+            showApplicationResult(application);
+            
+            // 保存到本地存储（可选）
+            saveToLocalStorage(application);
+        });
+        
+        function generateApplicationId() {
+            return 'APP' + Date.now() + Math.random().toString(36).substr(2, 4).toUpperCase();
+        }
+        
+        function showApplicationResult(application) {
+            const resultDiv = document.getElementById('result');
+            const packageNames = {
+                'trial': '7天体验卡',
+                'monthly': '月卡',
+                'quarterly': '季卡', 
+                'yearly': '年卡'
+            };
+            
+            const applicationText = `【设备授权申请】
+申请ID：${application.application_id}
+姓名：${application.owner}
+联系方式：${application.contact}
+设备类型：${application.device_type}
+设备ID：${application.device_id}
+申请套餐：${packageNames[application.package]}
+申请时间：${application.apply_date}
+
+请将以上信息发送给管理员开通权限。`;
+            
+            resultDiv.className = 'success';
+            resultDiv.innerHTML = `
+                <h3>✅ 申请信息已生成！</h3>
+                <p>请将以下信息发送给管理员：</p>
+                
+                <div class="application-data">
+                    <pre>${applicationText}</pre>
+                </div>
+                
+                <button class="btn-copy" onclick="copyToClipboard('${applicationText.replace(/\n/g, '\\n')}')">
+                    复制申请信息
+                </button>
+                
+                <p style="margin-top: 15px; font-size: 14px; color: #666;">
+                    💡 提示：复制以上信息后，通过微信、QQ等方式发送给管理员
+                </p>
+            `;
+            
+            resultDiv.style.display = 'block';
+            
+            // 滚动到结果区域
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function copyToClipboard(text) {
+            const textToCopy = text.replace(/\\n/g, '\n');
+            
+            // 方法1: 使用现代 Clipboard API
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    alert('✅ 申请信息已复制到剪贴板！');
+                }).catch(err => {
+                    fallbackCopyToClipboard(textToCopy);
+                });
+            } else {
+                // 方法2: 兼容老浏览器的方案
+                fallbackCopyToClipboard(textToCopy);
+            }
+        }
+        
+        function fallbackCopyToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                alert('✅ 申请信息已复制到剪贴板！');
+            } catch (err) {
+                alert('❌ 复制失败，请手动选择复制');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        function saveToLocalStorage(application) {
+            // 保存到浏览器本地存储，方便用户查看
+            try {
+                let applications = JSON.parse(localStorage.getItem('my_applications') || '[]');
+                applications.unshift(application);
+                localStorage.setItem('my_applications', JSON.stringify(applications));
+            } catch (e) {
+                console.log('本地存储失败，但不影响使用');
+            }
+        }
+    </script>
+</body>
+</html>
