@@ -176,14 +176,14 @@
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin-top: 30px; /* 设备列表移到下面 */
+            margin-top: 30px;
         }
         
         .table-header {
             background: var(--light);
             padding: 20px;
             display: grid;
-            grid-template-columns: 1fr 2fr 2fr 2fr 1fr 1fr 1fr; /* 增加一列用于删除按钮 */
+            grid-template-columns: 1fr 3fr 2fr 1fr 1fr; /* 去掉用户列 */
             gap: 15px;
             font-weight: 600;
             border-bottom: 1px solid #eee;
@@ -192,7 +192,7 @@
         .table-row {
             padding: 20px;
             display: grid;
-            grid-template-columns: 1fr 2fr 2fr 2fr 1fr 1fr 1fr; /* 增加一列用于删除按钮 */
+            grid-template-columns: 1fr 3fr 2fr 1fr 1fr; /* 去掉用户列 */
             gap: 15px;
             border-bottom: 1px solid #eee;
             transition: background 0.3s;
@@ -399,7 +399,7 @@
                         <span>🔄</span> 刷新列表
                     </button>
                     <div class="search-box">
-                        <input type="text" class="search-input" placeholder="搜索设备ID或用户..." onkeyup="filterDevices(this.value)">
+                        <input type="text" class="search-input" placeholder="搜索设备ID..." onkeyup="filterDevices(this.value)">
                     </div>
                 </div>
                 
@@ -408,8 +408,6 @@
                     <div class="table-header">
                         <div>序号</div>
                         <div>设备ID</div>
-                        <div>用户</div>
-                        <div>联系方式</div>
                         <div>到期时间</div>
                         <div>状态</div>
                         <div>操作</div>
@@ -444,16 +442,6 @@
             </div>
             
             <div class="form-group">
-                <label>用户姓名：</label>
-                <input type="text" id="newOwner" class="form-control" placeholder="输入用户姓名">
-            </div>
-            
-            <div class="form-group">
-                <label>联系方式：</label>
-                <input type="text" id="newContact" class="form-control" placeholder="手机号或微信号">
-            </div>
-            
-            <div class="form-group">
                 <label>套餐类型：</label>
                 <select id="newPackage" class="form-control">
                     <option value="trial">🎁 体验卡 (7天)</option>
@@ -471,21 +459,17 @@
     </div>
 
     <script>
-        // 示例设备数据
+        // 示例设备数据 - 去掉用户名和联系方式
         let devices = [
             {
                 id: "TV123456789",
-                owner: "张三",
-                contact: "13800138000",
                 package: "yearly",
                 activate_date: "2024-01-01",
                 expire_date: "2024-12-31",
                 status: "active"
             },
             {
-                id: "865123456789012",
-                owner: "李四",
-                contact: "13900139000", 
+                id: "865123456789012", 
                 package: "monthly",
                 activate_date: "2024-01-10",
                 expire_date: "2024-02-09",
@@ -493,8 +477,6 @@
             },
             {
                 id: "987654321",
-                owner: "王五",
-                contact: "13600136000",
                 package: "quarterly", 
                 activate_date: "2024-01-15",
                 expire_date: "2024-04-15",
@@ -502,8 +484,6 @@
             },
             {
                 id: "TV888888888", 
-                owner: "赵六",
-                contact: "13700137000",
                 package: "trial",
                 activate_date: "2024-01-20",
                 expire_date: "2024-01-27",
@@ -548,8 +528,6 @@
                 row.innerHTML = `
                     <div>${index + 1}</div>
                     <div>${device.id}</div>
-                    <div>${device.owner}</div>
-                    <div>${device.contact}</div>
                     <div>${device.expire_date} ${!isExpired ? `<br><small>剩余 ${daysRemaining} 天</small>` : ''}</div>
                     <div>
                         <span class="status-badge ${isExpired ? 'status-expired' : daysRemaining <= 7 ? 'status-warning' : 'status-active'}">
@@ -568,10 +546,7 @@
         
         // 删除单个设备
         function deleteDevice(deviceId) {
-            const device = devices.find(d => d.id === deviceId);
-            if (!device) return;
-            
-            if (confirm(`确定要删除设备 ${deviceId}（用户：${device.owner}）吗？此操作不可撤销！`)) {
+            if (confirm(`确定要删除设备 ${deviceId} 吗？此操作不可撤销！`)) {
                 devices = devices.filter(d => d.id !== deviceId);
                 loadDevices();
                 updateStats();
@@ -612,24 +587,15 @@
             document.getElementById('addDeviceModal').style.display = 'none';
             // 清空表单
             document.getElementById('newDeviceId').value = '';
-            document.getElementById('newOwner').value = '';
-            document.getElementById('newContact').value = '';
         }
         
         // 添加设备
         function addDevice() {
             const deviceId = document.getElementById('newDeviceId').value.trim();
-            const owner = document.getElementById('newOwner').value.trim();
-            const contact = document.getElementById('newContact').value.trim();
             const packageType = document.getElementById('newPackage').value;
             
             if (!deviceId) {
                 alert('请输入设备ID');
-                return;
-            }
-            
-            if (!owner) {
-                alert('请输入用户姓名');
                 return;
             }
             
@@ -655,8 +621,6 @@
             // 添加新设备
             const newDevice = {
                 id: deviceId,
-                owner: owner,
-                contact: contact || '未提供',
                 package: packageType,
                 activate_date: new Date().toISOString().split('T')[0],
                 expire_date: expireDate,
@@ -694,7 +658,7 @@
                 return;
             }
             
-            const deviceList = expiredDevices.map(d => `${d.id}（${d.owner}）`).join('\n');
+            const deviceList = expiredDevices.map(d => d.id).join('\n');
             
             if (confirm(`确定要删除以下 ${expiredCount} 个过期设备吗？\n\n${deviceList}\n\n此操作不可撤销！`)) {
                 devices = devices.filter(d => new Date(d.expire_date) >= new Date());
