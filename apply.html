@@ -4,6 +4,11 @@
     <title>设备授权申请</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- PWA配置 -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="manifest.json">
     <style>
         * {
             margin: 0;
@@ -85,6 +90,19 @@
             padding: 10px 15px;
             border-radius: 5px;
             cursor: pointer;
+            width: 100%;
+            margin: 5px 0;
+        }
+        
+        .btn-check {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin: 5px 0;
         }
         
         .required::after {
@@ -111,12 +129,69 @@
             border: 1px solid #c3e6cb;
         }
         
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
         .application-data {
             background: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
             margin: 15px 0;
             border-left: 4px solid #007bff;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .device-status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-not-found {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: #dc3545;
         }
     </style>
 </head>
@@ -125,6 +200,16 @@
         <div class="header">
             <h1>📱 设备授权申请</h1>
             <p>填写信息，提交后联系管理员开通</p>
+        </div>
+        
+        <!-- 快速操作 -->
+        <div class="quick-actions">
+            <button class="btn-check" onclick="checkDeviceStatus()">
+                🔍 查询设备状态
+            </button>
+            <button class="btn-copy" onclick="showMyApplications()">
+                📋 我的申请记录
+            </button>
         </div>
         
         <form id="deviceForm">
@@ -146,12 +231,13 @@
                     <option value="tv">电视</option>
                     <option value="tv_box">电视盒子</option>
                     <option value="mobile">手机</option>
+                    <option value="tablet">平板</option>
                 </select>
             </div>
             
             <div class="form-group">
                 <label class="required">设备识别码：</label>
-                <input type="text" name="device_id" placeholder="请输入设备序列号或IMEI" required>
+                <input type="text" name="device_id" id="device_id" placeholder="请输入设备序列号或IMEI" required>
                 <div class="help-text">
                     📺 电视：查看机身背面标签或系统设置中的"序列号"<br>
                     📱 手机：拨号界面输入 <code>*#06#</code> 获取IMEI<br>
@@ -173,9 +259,71 @@
         </form>
         
         <div id="result"></div>
+        
+        <!-- 设备状态检查区域 -->
+        <div id="deviceStatus" style="display: none;">
+            <h3>📊 设备状态查询</h3>
+            <div id="statusResult"></div>
+        </div>
+        
+        <!-- 申请记录区域 -->
+        <div id="applicationHistory" style="display: none;">
+            <h3>📋 我的申请记录</h3>
+            <div id="historyList"></div>
+        </div>
     </div>
 
     <script>
+        // 配置 - 修改为您的GitHub仓库链接
+        const CONFIG = {
+            DEVICES_JSON_URL: 'https://raw.githubusercontent.com/xiaolong-nihao/tv-service-config/main/devices.json',
+            CACHE_ENABLED: true
+        };
+        
+        let devicesData = null;
+        let lastFetchTime = 0;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('设备授权申请页面初始化');
+            preloadDevicesData();
+        });
+        
+        // 预加载设备数据
+        async function preloadDevicesData() {
+            try {
+                devicesData = await fetchDevicesData();
+                console.log('设备数据预加载成功');
+            } catch (error) {
+                console.log('设备数据预加载失败:', error);
+            }
+        }
+        
+        // 获取设备数据
+        async function fetchDevicesData() {
+            const now = Date.now();
+            
+            // 检查缓存
+            if (CONFIG.CACHE_ENABLED && devicesData && (now - lastFetchTime) < 5 * 60 * 1000) {
+                return devicesData;
+            }
+            
+            try {
+                const response = await fetch(CONFIG.DEVICES_JSON_URL + '?t=' + now);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                devicesData = data;
+                lastFetchTime = now;
+                return data;
+            } catch (error) {
+                throw new Error('无法加载设备数据: ' + error.message);
+            }
+        }
+        
+        // 表单提交处理
         document.getElementById('deviceForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -187,13 +335,14 @@
                 device_id: formData.get('device_id'),
                 package: formData.get('package'),
                 apply_date: new Date().toLocaleString('zh-CN'),
-                application_id: generateApplicationId()
+                application_id: generateApplicationId(),
+                status: 'pending'
             };
             
             // 显示申请结果
             showApplicationResult(application);
             
-            // 保存到本地存储（可选）
+            // 保存到本地存储
             saveToLocalStorage(application);
         });
         
@@ -226,12 +375,10 @@
                 <h3>✅ 申请信息已生成！</h3>
                 <p>请将以下信息发送给管理员：</p>
                 
-                <div class="application-data">
-                    <pre>${applicationText}</pre>
-                </div>
+                <div class="application-data">${applicationText}</div>
                 
-                <button class="btn-copy" onclick="copyToClipboard('${applicationText.replace(/\n/g, '\\n')}')">
-                    复制申请信息
+                <button class="btn-copy" onclick="copyToClipboard('${escapeText(applicationText)}')">
+                    📋 复制申请信息
                 </button>
                 
                 <p style="margin-top: 15px; font-size: 14px; color: #666;">
@@ -241,23 +388,174 @@
             
             resultDiv.style.display = 'block';
             
+            // 隐藏其他区域
+            document.getElementById('deviceStatus').style.display = 'none';
+            document.getElementById('applicationHistory').style.display = 'none';
+            
             // 滚动到结果区域
             resultDiv.scrollIntoView({ behavior: 'smooth' });
         }
         
-        function copyToClipboard(text) {
-            const textToCopy = text.replace(/\\n/g, '\n');
+        // 检查设备状态
+        async function checkDeviceStatus() {
+            const deviceId = document.getElementById('device_id').value.trim();
+            const statusResult = document.getElementById('statusResult');
             
+            if (!deviceId) {
+                alert('请输入设备ID进行查询');
+                return;
+            }
+            
+            statusResult.innerHTML = '<div class="loading">🔍 查询中...</div>';
+            
+            try {
+                const data = await fetchDevicesData();
+                const devices = data.authorized_devices || [];
+                const device = devices.find(d => d.device_id === deviceId);
+                
+                let statusHtml = '';
+                
+                if (device) {
+                    const isExpired = new Date(device.expire_date) < new Date();
+                    const daysRemaining = Math.ceil((new Date(device.expire_date) - new Date()) / (1000 * 60 * 60 * 24));
+                    
+                    statusHtml = `
+                        <div class="device-status ${isExpired ? 'status-expired' : 'status-active'}">
+                            ${isExpired ? '❌ 已过期' : '✅ 授权有效'}
+                        </div>
+                        <div class="application-data">
+设备ID：${device.device_id}
+用户：${device.owner}
+联系方式：${device.contact}
+套餐：${device.package}
+激活日期：${device.activate_date}
+到期日期：${device.expire_date}
+${!isExpired ? `剩余天数：${daysRemaining}天` : '状态：已过期'}
+                        </div>
+                    `;
+                } else {
+                    statusHtml = `
+                        <div class="device-status status-not-found">
+                            ❓ 设备未授权
+                        </div>
+                        <p>该设备尚未获得授权，请提交申请。</p>
+                    `;
+                }
+                
+                statusResult.innerHTML = statusHtml;
+                
+            } catch (error) {
+                statusResult.innerHTML = `
+                    <div class="error">
+                        ❌ 查询失败: ${error.message}
+                        <br>
+                        <button class="btn-check" onclick="checkDeviceStatus()">重试</button>
+                    </div>
+                `;
+            }
+            
+            // 显示状态区域，隐藏其他区域
+            document.getElementById('deviceStatus').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('applicationHistory').style.display = 'none';
+            
+            document.getElementById('deviceStatus').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 显示申请记录
+        function showMyApplications() {
+            const historyList = document.getElementById('historyList');
+            
+            try {
+                const applications = JSON.parse(localStorage.getItem('my_applications') || '[]');
+                
+                if (applications.length === 0) {
+                    historyList.innerHTML = '<div class="info">暂无申请记录</div>';
+                } else {
+                    let html = '';
+                    applications.forEach((app, index) => {
+                        const packageNames = {
+                            'trial': '7天体验卡',
+                            'monthly': '月卡',
+                            'quarterly': '季卡', 
+                            'yearly': '年卡'
+                        };
+                        
+                        html += `
+                            <div class="application-data" style="margin-bottom: 15px;">
+申请ID：${app.application_id}
+姓名：${app.owner}
+联系方式：${app.contact}
+设备类型：${app.device_type}
+设备ID：${app.device_id}
+申请套餐：${packageNames[app.package]}
+申请时间：${app.apply_date}
+状态：${app.status || '待处理'}
+                            </div>
+                            <button class="btn-copy" onclick="copyApplication('${index}')">
+                                复制此申请
+                            </button>
+                            <hr style="margin: 15px 0;">
+                        `;
+                    });
+                    historyList.innerHTML = html;
+                }
+            } catch (error) {
+                historyList.innerHTML = '<div class="error">加载申请记录失败</div>';
+            }
+            
+            // 显示历史区域，隐藏其他区域
+            document.getElementById('applicationHistory').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('deviceStatus').style.display = 'none';
+            
+            document.getElementById('applicationHistory').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 复制特定申请
+        function copyApplication(index) {
+            try {
+                const applications = JSON.parse(localStorage.getItem('my_applications') || '[]');
+                const app = applications[index];
+                
+                if (app) {
+                    const packageNames = {
+                        'trial': '7天体验卡',
+                        'monthly': '月卡',
+                        'quarterly': '季卡', 
+                        'yearly': '年卡'
+                    };
+                    
+                    const applicationText = `【设备授权申请】
+申请ID：${app.application_id}
+姓名：${app.owner}
+联系方式：${app.contact}
+设备类型：${app.device_type}
+设备ID：${app.device_id}
+申请套餐：${packageNames[app.package]}
+申请时间：${app.apply_date}
+
+请将以上信息发送给管理员开通权限。`;
+                    
+                    copyToClipboard(applicationText);
+                }
+            } catch (error) {
+                alert('复制失败');
+            }
+        }
+        
+        // 复制到剪贴板
+        function copyToClipboard(text) {
             // 方法1: 使用现代 Clipboard API
             if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    alert('✅ 申请信息已复制到剪贴板！');
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('✅ 信息已复制到剪贴板！');
                 }).catch(err => {
-                    fallbackCopyToClipboard(textToCopy);
+                    fallbackCopyToClipboard(text);
                 });
             } else {
                 // 方法2: 兼容老浏览器的方案
-                fallbackCopyToClipboard(textToCopy);
+                fallbackCopyToClipboard(text);
             }
         }
         
@@ -273,7 +571,7 @@
             
             try {
                 document.execCommand('copy');
-                alert('✅ 申请信息已复制到剪贴板！');
+                alert('✅ 信息已复制到剪贴板！');
             } catch (err) {
                 alert('❌ 复制失败，请手动选择复制');
             }
@@ -281,15 +579,34 @@
             document.body.removeChild(textArea);
         }
         
+        // 转义文本用于JavaScript字符串
+        function escapeText(text) {
+            return text.replace(/\n/g, '\\n').replace(/'/g, "\\'");
+        }
+        
         function saveToLocalStorage(application) {
-            // 保存到浏览器本地存储，方便用户查看
             try {
                 let applications = JSON.parse(localStorage.getItem('my_applications') || '[]');
                 applications.unshift(application);
+                // 只保留最近20条记录
+                applications = applications.slice(0, 20);
                 localStorage.setItem('my_applications', JSON.stringify(applications));
             } catch (e) {
                 console.log('本地存储失败，但不影响使用');
             }
+        }
+        
+        // 注册Service Worker（PWA支持）
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker 注册成功');
+                    })
+                    .catch(function(error) {
+                        console.log('ServiceWorker 注册失败:', error);
+                    });
+            });
         }
     </script>
 </body>
