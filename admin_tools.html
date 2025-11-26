@@ -242,6 +242,16 @@
                 box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             }
         }
+
+        /* Toast动画 */
+        @keyframes slideDown {
+            from { top: -100px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { top: 20px; opacity: 1; }
+            to { top: -100px; opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -315,18 +325,22 @@
     <button id="installBtn" class="install-btn" title="安装APP">📱</button>
 
     <script>
-        // 配置
+        // 配置 - 修改为您的GitHub仓库链接
         const CONFIG = {
-            DEVICES_JSON_URL: 'https://gitee.com/你的用户名/你的仓库/raw/master/devices.json',
-            CACHE_ENABLED: true
+            DEVICES_JSON_URL: 'https://raw.githubusercontent.com/你的用户名/tv-service-config/main/devices.json',
+            CACHE_ENABLED: true,
+            CACHE_TIME: 5 * 60 * 1000 // 5分钟缓存
         };
         
         // 安装PWA相关变量
         let deferredPrompt;
+        let devicesCache = null;
+        let lastFetchTime = 0;
         
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             console.log('设备管理APP初始化...');
+            console.log('数据源:', CONFIG.DEVICES_JSON_URL);
             
             // 注册Service Worker
             registerServiceWorker();
@@ -339,13 +353,16 @@
             
             // 加载统计信息
             loadStats();
+            
+            // 添加网络状态监听
+            setupNetworkListener();
         });
         
         // 注册Service Worker
         async function registerServiceWorker() {
             if ('serviceWorker' in navigator) {
                 try {
-                    const registration = await navigator.worker.register('/sw.js');
+                    const registration = await navigator.serviceWorker.register('/sw.js');
                     console.log('Service Worker 注册成功:', registration);
                     
                     // 检查更新
@@ -388,16 +405,27 @@
             });
         }
         
+        // 网络状态监听
+        function setupNetworkListener() {
+            window.addEventListener('online', () => {
+                console.log('网络连接恢复，重新加载数据');
+                showToast('网络已连接', 'success');
+                loadDeviceList();
+            });
+            
+            window.addEventListener('offline', () => {
+                console.log('网络连接断开');
+                showToast('网络连接已断开', 'warning');
+            });
+        }
+        
         // 加载设备列表
         async function loadDeviceList() {
             const deviceList = document.getElementById('deviceList');
             deviceList.innerHTML = '<div class="loading">⏳ 加载中...</div>';
             
             try {
-                const response = await fetch(CONFIG.DEVICES_JSON_URL + '?t=' + Date.now());
-                if (!response.ok) throw new Error('网络请求失败');
-                
-                const data = await response.json();
+                const data = await fetchWithCache(CONFIG.DEVICES_JSON_URL);
                 displayDeviceList(data.authorized_devices);
                 
             } catch (error) {
@@ -410,6 +438,33 @@
                     </div>
                 `;
             }
+        }
+        
+        // 带缓存的获取函数
+        async function fetchWithCache(url) {
+            const now = Date.now();
+            
+            // 检查缓存是否有效
+            if (CONFIG.CACHE_ENABLED && devicesCache && (now - lastFetchTime) < CONFIG.CACHE_TIME) {
+                console.log('使用缓存数据');
+                return devicesCache;
+            }
+            
+            // 添加时间戳避免缓存
+            const response = await fetch(url + '?t=' + now);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            // 更新缓存
+            if (CONFIG.CACHE_ENABLED) {
+                devicesCache = data;
+                lastFetchTime = now;
+            }
+            
+            return data;
         }
         
         // 显示设备列表
@@ -456,13 +511,16 @@
         // 加载统计信息
         async function loadStats() {
             try {
-                const response = await fetch(CONFIG.DEVICES_JSON_URL + '?t=' + Date.now());
-                const data = await response.json();
+                const data = await fetchWithCache(CONFIG.DEVICES_JSON_URL);
                 const devices = data.authorized_devices || [];
                 
                 const total = devices.length;
                 const active = devices.filter(d => new Date(d.expire_date) >= new Date()).length;
                 const expired = total - active;
+                const expiringSoon = devices.filter(d => {
+                    const daysRemaining = Math.ceil((new Date(d.expire_date) - new Date()) / (1000 * 60 * 60 * 24));
+                    return daysRemaining <= 7 && daysRemaining > 0;
+                }).length;
                 
                 document.getElementById('statsInfo').innerHTML = `
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
@@ -474,11 +532,25 @@
                             <div style="font-size: 1.5rem; font-weight: bold;">${active}</div>
                             <div style="font-size: 0.8rem;">有效设备</div>
                         </div>
+                        <div style="padding: 10px; background: ${expired > 0 ? '#ffebee' : '#e8f5e8'}; border-radius: 8px;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: ${expired > 0 ? '#dc3545' : 'inherit'}">${expired}</div>
+                            <div style="font-size: 0.8rem;">已过期</div>
+                        </div>
+                        <div style="padding: 10px; background: ${expiringSoon > 0 ? '#fff3cd' : '#e8f5e8'}; border-radius: 8px;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: ${expiringSoon > 0 ? '#856404' : 'inherit'}">${expiringSoon}</div>
+                            <div style="font-size: 0.8rem;">即将到期</div>
+                        </div>
                     </div>
                 `;
                 
             } catch (error) {
-                document.getElementById('statsInfo').innerHTML = '<div class="error">统计加载失败</div>';
+                document.getElementById('statsInfo').innerHTML = `
+                    <div class="error">
+                        ❌ 统计加载失败
+                        <br>
+                        <button class="btn btn-primary" onclick="loadStats()">重试</button>
+                    </div>
+                `;
             }
         }
         
@@ -531,7 +603,7 @@
             // 复制到剪贴板
             copyToClipboard(deviceInfo);
             
-            alert(`✅ 设备信息已复制到剪贴板！\n\n请更新Gitee上的devices.json文件，然后点击"刷新列表"。`);
+            alert(`✅ 设备信息已复制到剪贴板！\n\n请更新GitHub上的devices.json文件，然后点击"刷新列表"。`);
             
             hideAddForm();
             // 延迟刷新，给你时间更新文件
@@ -576,15 +648,34 @@
             }
         }
         
-        // 离线检测
-        window.addEventListener('online', () => {
-            console.log('网络连接恢复');
-            loadDeviceList();
-        });
-        
-        window.addEventListener('offline', () => {
-            console.log('网络连接断开');
-        });
+        // Toast提示
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#ffc107'};
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: slideDown 0.3s ease;
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
     </script>
 </body>
 </html>
+
