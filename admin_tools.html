@@ -142,6 +142,11 @@
             color: white;
         }
         
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+        
         .action-bar {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -364,15 +369,31 @@
             margin-bottom: 20px;
         }
         
-        .admin-code {
+        .admin-code-display {
             background: #2d3748;
             color: #68d391;
-            padding: 10px;
+            padding: 15px;
             border-radius: 6px;
             font-family: monospace;
-            font-size: 14px;
+            font-size: 18px;
+            text-align: center;
+            margin: 10px 0;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+        
+        .code-info {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
             margin-top: 10px;
-            word-break: break-all;
+        }
+        
+        .admin-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -380,25 +401,45 @@
     <div class="container">
         <div class="header">
             <h1>📱 设备授权管理</h1>
-            <p>公开管理界面 - 无需登录</p>
+            <p>公开管理界面 - 操作码验证</p>
         </div>
         
         <div class="main-content">
-            <!-- 管理员操作码提示 -->
+            <!-- 管理员操作码区域 -->
             <div class="admin-code-section">
                 <div class="section-title">
-                    <i>🔑</i> 管理员操作
+                    <i>🔑</i> 管理员操作码
                 </div>
-                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">
-                    如需添加设备或管理用户，请联系系统管理员获取操作码
-                </p>
-                <div class="form-group">
-                    <label>操作码：</label>
-                    <input type="password" id="adminCode" class="form-control" placeholder="请输入管理员操作码">
+                
+                <div id="codeInputSection">
+                    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">
+                        请输入操作码进行管理操作
+                    </p>
+                    <div class="form-group">
+                        <input type="password" id="adminCode" class="form-control" placeholder="请输入操作码">
+                    </div>
+                    <button class="btn btn-primary" onclick="verifyAdminCode()">
+                        验证操作码
+                    </button>
                 </div>
-                <button class="btn btn-secondary" onclick="verifyAdminCode()">
-                    验证操作码
-                </button>
+                
+                <div id="codeDisplaySection" style="display: none;">
+                    <div class="admin-code-display" id="currentCodeDisplay">
+                        ADMIN-2024-CODE
+                    </div>
+                    <div class="code-info">
+                        <div>有效期至: <span id="codeExpiry">2024-12-31 23:59:59</span></div>
+                        <div>使用次数: <span id="codeUsage">0/10</span></div>
+                    </div>
+                    <div class="admin-controls">
+                        <button class="btn btn-warning" onclick="generateNewCode()">
+                            🔄 生成新码
+                        </button>
+                        <button class="btn btn-danger" onclick="revokeCurrentCode()">
+                            🚫 撤销当前码
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <!-- 导航标签 -->
@@ -406,6 +447,7 @@
                 <li class="nav-tab active" data-tab="dashboard">📊 数据</li>
                 <li class="nav-tab" data-tab="devices">📋 设备</li>
                 <li class="nav-tab" data-tab="users">👥 用户</li>
+                <li class="nav-tab" data-tab="settings">⚙️ 设置</li>
             </ul>
             
             <!-- 数据看板 -->
@@ -488,6 +530,44 @@
                     <!-- 用户列表将通过JavaScript动态加载 -->
                 </div>
             </div>
+            
+            <!-- 系统设置 -->
+            <div id="settings" class="tab-content">
+                <h2 style="margin-bottom: 20px; font-size: 18px;">⚙️ 系统设置</h2>
+                
+                <div class="form-group">
+                    <label>系统名称：</label>
+                    <input type="text" class="form-control" value="设备管理大师" id="systemName">
+                </div>
+                
+                <div class="form-group">
+                    <label>操作码设置：</label>
+                    <select class="form-control" id="codeValidity">
+                        <option value="1">1小时有效期</option>
+                        <option value="24" selected>24小时有效期</option>
+                        <option value="168">7天有效期</option>
+                        <option value="720">30天有效期</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>最大使用次数：</label>
+                    <input type="number" class="form-control" value="10" id="maxUsage" min="1" max="100">
+                </div>
+                
+                <button class="btn btn-primary" onclick="updateSettings()">
+                    保存设置
+                </button>
+                
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-success" onclick="backupData()" style="margin-bottom: 10px;">
+                        💾 备份数据
+                    </button>
+                    <button class="btn btn-danger" onclick="clearAllData()">
+                        🗑️ 清空数据
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -549,6 +629,10 @@
     </div>
 
     <script>
+        // 操作码管理系统
+        let currentAdminCode = null;
+        let isAdmin = false;
+        
         // 示例设备数据
         let devices = [
             {
@@ -564,20 +648,6 @@
                 activate_date: "2024-01-10",
                 expire_date: "2024-02-09",
                 status: "active"
-            },
-            {
-                id: "987654321",
-                package: "permanent", 
-                activate_date: "2024-01-15",
-                expire_date: "永久",
-                status: "permanent"
-            },
-            {
-                id: "TV888888888", 
-                package: "quarterly",
-                activate_date: "2024-01-20",
-                expire_date: "2024-04-20",
-                status: "active"
             }
         ];
 
@@ -591,20 +661,8 @@
                 created: "2024-01-10",
                 devices: 3,
                 active: 2
-            },
-            {
-                id: 2,
-                name: "李四",
-                email: "lisi@example.com",
-                role: "viewer",
-                created: "2024-01-15",
-                devices: 0,
-                active: 0
             }
         ];
-        
-        // 管理员状态
-        let isAdmin = false;
         
         // 初始化页面
         document.addEventListener('DOMContentLoaded', function() {
@@ -612,22 +670,114 @@
             loadDevices();
             loadUsers();
             updateStats();
+            loadAdminCode();
         });
+        
+        // 加载管理员操作码
+        function loadAdminCode() {
+            const savedCode = localStorage.getItem('adminCode');
+            if (savedCode) {
+                currentAdminCode = JSON.parse(savedCode);
+                if (new Date() < new Date(currentAdminCode.expiresAt)) {
+                    showCodeDisplay();
+                }
+            }
+        }
+        
+        // 生成新的操作码
+        function generateNewCode() {
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
+                return;
+            }
+            
+            const validity = parseInt(document.getElementById('codeValidity').value);
+            const maxUsage = parseInt(document.getElementById('maxUsage').value);
+            
+            const newCode = {
+                code: generateRandomCode(),
+                createdAt: new Date().toISOString(),
+                expiresAt: new Date(Date.now() + validity * 60 * 60 * 1000).toISOString(),
+                maxUsage: maxUsage,
+                usedCount: 0
+            };
+            
+            currentAdminCode = newCode;
+            localStorage.setItem('adminCode', JSON.stringify(newCode));
+            
+            showCodeDisplay();
+            showToast('✅ 新操作码已生成！');
+        }
+        
+        // 生成随机操作码
+        function generateRandomCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 8; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return 'ADMIN-' + result;
+        }
+        
+        // 显示操作码
+        function showCodeDisplay() {
+            document.getElementById('codeInputSection').style.display = 'none';
+            document.getElementById('codeDisplaySection').style.display = 'block';
+            
+            document.getElementById('currentCodeDisplay').textContent = currentAdminCode.code;
+            document.getElementById('codeExpiry').textContent = new Date(currentAdminCode.expiresAt).toLocaleString('zh-CN');
+            document.getElementById('codeUsage').textContent = `${currentAdminCode.usedCount}/${currentAdminCode.maxUsage}`;
+        }
+        
+        // 撤销当前操作码
+        function revokeCurrentCode() {
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
+                return;
+            }
+            
+            if (confirm('确定要撤销当前操作码吗？')) {
+                localStorage.removeItem('adminCode');
+                currentAdminCode = null;
+                document.getElementById('codeDisplaySection').style.display = 'none';
+                document.getElementById('codeInputSection').style.display = 'block';
+                showToast('操作码已撤销');
+            }
+        }
         
         // 验证管理员操作码
         function verifyAdminCode() {
-            const code = document.getElementById('adminCode').value.trim();
+            const inputCode = document.getElementById('adminCode').value.trim();
             
-            // 这里应该是从服务器验证操作码
-            // 为了演示，我们使用一个简单的验证
-            if (code === 'ADMIN2024') {
+            if (!currentAdminCode) {
+                showToast('❌ 没有有效的操作码，请先生成操作码');
+                return;
+            }
+            
+            if (new Date() > new Date(currentAdminCode.expiresAt)) {
+                showToast('❌ 操作码已过期');
+                return;
+            }
+            
+            if (currentAdminCode.usedCount >= currentAdminCode.maxUsage) {
+                showToast('❌ 操作码使用次数已达上限');
+                return;
+            }
+            
+            if (inputCode === currentAdminCode.code) {
                 isAdmin = true;
+                currentAdminCode.usedCount++;
+                localStorage.setItem('adminCode', JSON.stringify(currentAdminCode));
+                
                 showToast('✅ 操作码验证成功！');
                 document.getElementById('deviceActions').style.display = 'grid';
                 document.getElementById('userActions').style.display = 'grid';
                 document.getElementById('adminCode').value = '';
+                
+                // 更新显示
+                document.getElementById('codeUsage').textContent = `${currentAdminCode.usedCount}/${currentAdminCode.maxUsage}`;
             } else {
-                showToast('❌ 操作码错误，请联系管理员');
+                showToast('❌ 操作码错误');
             }
         }
         
@@ -980,6 +1130,51 @@
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(query.toLowerCase()) ? 'grid' : 'none';
             });
+        }
+        
+        // 备份数据
+        function backupData() {
+            const backup = {
+                devices: devices,
+                users: users,
+                backupTime: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(backup, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `system_backup_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            showToast('数据备份成功！');
+        }
+        
+        // 清空所有数据
+        function clearAllData() {
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
+                return;
+            }
+            
+            if (confirm('⚠️ 确定要清空所有数据吗？此操作不可撤销！')) {
+                devices = [];
+                users = [];
+                loadDevices();
+                loadUsers();
+                updateStats();
+                showToast('所有数据已清空');
+            }
+        }
+        
+        // 更新设置
+        function updateSettings() {
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
+                return;
+            }
+            
+            showToast('设置保存成功');
         }
         
         // 显示Toast提示
