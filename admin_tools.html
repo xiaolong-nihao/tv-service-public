@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>设备管理后台</title>
+    <title>设备授权管理</title>
     <style>
         :root {
             --primary: #4361ee;
@@ -132,10 +132,6 @@
             color: white;
         }
         
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        
         .btn-danger {
             background: var(--danger);
             color: white;
@@ -261,24 +257,6 @@
             color: #0369a1;
         }
         
-        .delete-btn {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 11px;
-            transition: all 0.3s;
-            width: 100%;
-            margin-top: 5px;
-        }
-        
-        .delete-btn:hover {
-            background: #dc2626;
-            transform: scale(1.05);
-        }
-        
         .modal {
             display: none;
             position: fixed;
@@ -318,29 +296,6 @@
             padding: 10px 15px;
             border: 2px solid #e9ecef;
             border-radius: 20px;
-            font-size: 14px;
-        }
-        
-        .login-form {
-            padding: 20px;
-        }
-        
-        .user-info {
-            background: #e7f3ff;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .user-name {
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-        
-        .user-role {
-            color: #666;
             font-size: 14px;
         }
         
@@ -401,54 +356,48 @@
         .nav-tab.active {
             background: var(--primary);
         }
+        
+        .admin-code-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .admin-code {
+            background: #2d3748;
+            color: #68d391;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            margin-top: 10px;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
-    <!-- 登录界面 -->
-    <div id="loginPage" class="container">
+    <div class="container">
         <div class="header">
-            <h1>🔐 设备管理后台</h1>
-            <p>管理员登录</p>
+            <h1>📱 设备授权管理</h1>
+            <p>公开管理界面 - 无需登录</p>
         </div>
         
         <div class="main-content">
-            <div class="login-form">
+            <!-- 管理员操作码提示 -->
+            <div class="admin-code-section">
+                <div class="section-title">
+                    <i>🔑</i> 管理员操作
+                </div>
+                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">
+                    如需添加设备或管理用户，请联系系统管理员获取操作码
+                </p>
                 <div class="form-group">
-                    <label>管理员账号：</label>
-                    <input type="text" id="adminUsername" class="form-control" placeholder="请输入管理员账号">
+                    <label>操作码：</label>
+                    <input type="password" id="adminCode" class="form-control" placeholder="请输入管理员操作码">
                 </div>
-                
-                <div class="form-group">
-                    <label>密码：</label>
-                    <input type="password" id="adminPassword" class="form-control" placeholder="请输入密码">
-                </div>
-                
-                <button class="btn btn-primary" onclick="login()">
-                    登录系统
-                </button>
-                
-                <div style="margin-top: 20px; text-align: center; color: #666; font-size: 14px;">
-                    <p>默认管理员账号：admin</p>
-                    <p>默认密码：123456</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 主管理界面 -->
-    <div id="adminPage" class="container" style="display: none;">
-        <div class="header">
-            <h1>📱 设备管理后台</h1>
-            <p>专业设备授权管理系统</p>
-        </div>
-        
-        <div class="main-content">
-            <!-- 用户信息 -->
-            <div class="user-info">
-                <div class="user-name" id="currentUserName">管理员</div>
-                <div class="user-role" id="currentUserRole">系统管理员</div>
-                <button class="btn btn-secondary" onclick="logout()" style="margin-top: 10px; padding: 8px 15px; font-size: 14px;">
-                    退出登录
+                <button class="btn btn-secondary" onclick="verifyAdminCode()">
+                    验证操作码
                 </button>
             </div>
             
@@ -457,7 +406,6 @@
                 <li class="nav-tab active" data-tab="dashboard">📊 数据</li>
                 <li class="nav-tab" data-tab="devices">📋 设备</li>
                 <li class="nav-tab" data-tab="users">👥 用户</li>
-                <li class="nav-tab" data-tab="settings">⚙️ 设置</li>
             </ul>
             
             <!-- 数据看板 -->
@@ -495,7 +443,7 @@
             <div id="devices" class="tab-content">
                 <h2 style="margin-bottom: 20px; font-size: 18px;">设备管理</h2>
                 
-                <div class="action-bar">
+                <div class="action-bar" id="deviceActions" style="display: none;">
                     <button class="btn btn-primary" onclick="openAddDeviceModal()">
                         ➕ 添加设备
                     </button>
@@ -527,7 +475,7 @@
             <div id="users" class="tab-content">
                 <h2 style="margin-bottom: 20px; font-size: 18px;">👥 用户管理</h2>
                 
-                <div class="action-bar">
+                <div class="action-bar" id="userActions" style="display: none;">
                     <button class="btn btn-primary" onclick="openAddUserModal()">
                         ➕ 添加用户
                     </button>
@@ -538,39 +486,6 @@
                 
                 <div id="usersList">
                     <!-- 用户列表将通过JavaScript动态加载 -->
-                </div>
-            </div>
-            
-            <!-- 系统设置 -->
-            <div id="settings" class="tab-content">
-                <h2 style="margin-bottom: 20px; font-size: 18px;">⚙️ 系统设置</h2>
-                
-                <div class="form-group">
-                    <label>系统名称：</label>
-                    <input type="text" class="form-control" value="设备管理大师" id="systemName">
-                </div>
-                
-                <div class="form-group">
-                    <label>管理员密码：</label>
-                    <input type="password" class="form-control" placeholder="输入新密码" id="newPassword">
-                </div>
-                
-                <div class="form-group">
-                    <label>确认密码：</label>
-                    <input type="password" class="form-control" placeholder="再次输入新密码" id="confirmPassword">
-                </div>
-                
-                <button class="btn btn-primary" onclick="updateSettings()">
-                    保存设置
-                </button>
-                
-                <div style="margin-top: 20px;">
-                    <button class="btn btn-success" onclick="backupData()" style="margin-bottom: 10px;">
-                        💾 备份数据
-                    </button>
-                    <button class="btn btn-danger" onclick="clearAllData()">
-                        🗑️ 清空数据
-                    </button>
                 </div>
             </div>
         </div>
@@ -622,7 +537,6 @@
                 <label>角色：</label>
                 <select id="newUserRole" class="form-control">
                     <option value="user">普通用户</option>
-                    <option value="admin">管理员</option>
                     <option value="viewer">查看者</option>
                 </select>
             </div>
@@ -635,12 +549,6 @@
     </div>
 
     <script>
-        // 管理员账号信息
-        const ADMIN_ACCOUNT = {
-            username: 'admin',
-            password: '123456'
-        };
-        
         // 示例设备数据
         let devices = [
             {
@@ -677,15 +585,6 @@
         let users = [
             {
                 id: 1,
-                name: "管理员",
-                email: "admin@example.com",
-                role: "admin",
-                created: "2024-01-01",
-                devices: 15,
-                active: 12
-            },
-            {
-                id: 2,
                 name: "张三",
                 email: "zhangsan@example.com",
                 role: "user",
@@ -694,7 +593,7 @@
                 active: 2
             },
             {
-                id: 3,
+                id: 2,
                 name: "李四",
                 email: "lisi@example.com",
                 role: "viewer",
@@ -704,80 +603,31 @@
             }
         ];
         
-        // 当前登录用户
-        let currentUser = null;
+        // 管理员状态
+        let isAdmin = false;
         
         // 初始化页面
         document.addEventListener('DOMContentLoaded', function() {
-            // 检查是否已登录
-            checkLoginStatus();
             setupTabNavigation();
-        });
-        
-        // 检查登录状态
-        function checkLoginStatus() {
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                showAdminPage();
-            } else {
-                showLoginPage();
-            }
-        }
-        
-        // 显示登录页面
-        function showLoginPage() {
-            document.getElementById('loginPage').style.display = 'block';
-            document.getElementById('adminPage').style.display = 'none';
-        }
-        
-        // 显示管理页面
-        function showAdminPage() {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('adminPage').style.display = 'block';
-            
-            // 更新用户信息
-            document.getElementById('currentUserName').textContent = currentUser.name;
-            document.getElementById('currentUserRole').textContent = getRoleText(currentUser.role);
-            
-            // 加载数据
             loadDevices();
             loadUsers();
             updateStats();
-        }
+        });
         
-        // 登录功能
-        function login() {
-            const username = document.getElementById('adminUsername').value.trim();
-            const password = document.getElementById('adminPassword').value.trim();
+        // 验证管理员操作码
+        function verifyAdminCode() {
+            const code = document.getElementById('adminCode').value.trim();
             
-            if (!username || !password) {
-                showToast('请输入账号和密码');
-                return;
-            }
-            
-            if (username === ADMIN_ACCOUNT.username && password === ADMIN_ACCOUNT.password) {
-                currentUser = {
-                    name: '系统管理员',
-                    role: 'admin',
-                    loginTime: new Date().toISOString()
-                };
-                
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                showAdminPage();
-                showToast('登录成功！');
+            // 这里应该是从服务器验证操作码
+            // 为了演示，我们使用一个简单的验证
+            if (code === 'ADMIN2024') {
+                isAdmin = true;
+                showToast('✅ 操作码验证成功！');
+                document.getElementById('deviceActions').style.display = 'grid';
+                document.getElementById('userActions').style.display = 'grid';
+                document.getElementById('adminCode').value = '';
             } else {
-                showToast('账号或密码错误');
-            }
-        }
-        
-        // 退出登录
-        function logout() {
-            if (confirm('确定要退出登录吗？')) {
-                localStorage.removeItem('currentUser');
-                currentUser = null;
-                showLoginPage();
-                showToast('已退出登录');
+                showToast('❌ 操作码错误，请联系管理员');
             }
         }
         
@@ -835,11 +685,13 @@
                         <div><strong>激活日期:</strong> ${device.activate_date}</div>
                         <div><strong>套餐类型:</strong> ${getPackageText(device.package)}</div>
                         <div><strong>设备ID:</strong> ${device.id}</div>
+                        ${isAdmin ? `
                         <div>
-                            <button class="delete-btn" onclick="deleteDevice('${device.id}')" title="删除设备">
+                            <button class="btn btn-danger" onclick="deleteDevice('${device.id}')" style="padding: 6px 10px; font-size: 11px;">
                                 🗑️ 删除
                             </button>
                         </div>
+                        ` : ''}
                     </div>
                 `;
                 devicesList.appendChild(row);
@@ -858,7 +710,6 @@
         
         function getRoleText(role) {
             const roles = {
-                'admin': '系统管理员',
                 'user': '普通用户', 
                 'viewer': '查看者'
             };
@@ -872,25 +723,31 @@
             
             users.forEach(user => {
                 const userCard = document.createElement('div');
-                userCard.className = 'user-info';
+                userCard.className = 'stat-card';
                 userCard.innerHTML = `
-                    <div class="user-name">${user.name}</div>
-                    <div class="user-role">${getRoleText(user.role)} • ${user.email}</div>
-                    <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                        <div style="text-align: center;">
-                            <div style="font-weight: bold; font-size: 16px;">${user.devices}</div>
-                            <div style="font-size: 11px; color: #666;">总设备</div>
+                    <div style="text-align: left;">
+                        <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px;">${user.name}</div>
+                        <div style="color: #666; font-size: 13px; margin-bottom: 10px;">${getRoleText(user.role)} • ${user.email}</div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                            <div style="text-align: center;">
+                                <div style="font-weight: bold; font-size: 16px;">${user.devices}</div>
+                                <div style="font-size: 11px; color: #666;">总设备</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-weight: bold; font-size: 16px;">${user.active}</div>
+                                <div style="font-size: 11px; color: #666;">有效设备</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-weight: bold; font-size: 14px;">${user.created}</div>
+                                <div style="font-size: 11px; color: #666;">注册时间</div>
+                            </div>
                         </div>
-                        <div style="text-align: center;">
-                            <div style="font-weight: bold; font-size: 16px;">${user.active}</div>
-                            <div style="font-size: 11px; color: #666;">有效设备</div>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-weight: bold; font-size: 16px;">${user.created}</div>
-                            <div style="font-size: 11px; color: #666;">注册时间</div>
-                        </div>
+                        ${isAdmin ? `
+                        <button class="btn btn-danger" onclick="deleteUser(${user.id})" style="margin-top: 10px; padding: 8px 15px; font-size: 14px; width: 100%;">
+                            删除用户
+                        </button>
+                        ` : ''}
                     </div>
-                    ${user.role !== 'admin' ? `<button class="btn btn-danger" onclick="deleteUser(${user.id})" style="margin-top: 10px; padding: 8px 15px; font-size: 14px;">删除用户</button>` : ''}
                 `;
                 usersList.appendChild(userCard);
             });
@@ -898,6 +755,11 @@
         
         // 删除单个设备
         function deleteDevice(deviceId) {
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
+                return;
+            }
+            
             if (confirm(`确定要删除设备 ${deviceId} 吗？此操作不可撤销！`)) {
                 devices = devices.filter(d => d.id !== deviceId);
                 loadDevices();
@@ -908,13 +770,16 @@
         
         // 删除用户
         function deleteUser(userId) {
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
+                return;
+            }
+            
             const user = users.find(u => u.id === userId);
-            if (user && user.role !== 'admin' && confirm(`确定要删除用户 ${user.name} 吗？此操作不可撤销！`)) {
+            if (user && confirm(`确定要删除用户 ${user.name} 吗？此操作不可撤销！`)) {
                 users = users.filter(u => u.id !== userId);
                 loadUsers();
                 showToast(`用户 ${user.name} 已删除`);
-            } else if (user && user.role === 'admin') {
-                showToast('不能删除管理员账户');
             }
         }
         
@@ -940,6 +805,10 @@
         
         // 打开添加设备模态框
         function openAddDeviceModal() {
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
+                return;
+            }
             document.getElementById('addDeviceModal').style.display = 'flex';
         }
         
@@ -951,9 +820,8 @@
         
         // 打开添加用户模态框
         function openAddUserModal() {
-            // 检查权限
-            if (currentUser.role !== 'admin') {
-                showToast('只有管理员可以添加用户');
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
                 return;
             }
             document.getElementById('addUserModal').style.display = 'flex';
@@ -968,6 +836,11 @@
         
         // 添加设备
         function addDevice() {
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
+                return;
+            }
+            
             const deviceId = document.getElementById('newDeviceId').value.trim();
             const packageType = document.getElementById('newPackage').value;
             
@@ -1018,6 +891,11 @@
         
         // 添加用户
         function addUser() {
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
+                return;
+            }
+            
             const name = document.getElementById('newUserName').value.trim();
             const email = document.getElementById('newUserEmail').value.trim();
             const role = document.getElementById('newUserRole').value;
@@ -1046,6 +924,11 @@
         
         // 导出设备数据
         function exportDevices() {
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
+                return;
+            }
+            
             const dataStr = JSON.stringify(devices, null, 2);
             const dataBlob = new Blob([dataStr], {type: 'application/json'});
             
@@ -1057,11 +940,21 @@
         
         // 生成用户报表
         function generateUserReport() {
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
+                return;
+            }
+            
             showToast('用户报表生成功能开发中...');
         }
         
         // 删除过期设备
         function deleteExpiredDevices() {
+            if (!isAdmin) {
+                showToast('❌ 需要管理员权限');
+                return;
+            }
+            
             const expiredDevices = devices.filter(d => d.package !== "permanent" && new Date(d.expire_date) < new Date());
             const expiredCount = expiredDevices.length;
             
@@ -1087,56 +980,6 @@
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(query.toLowerCase()) ? 'grid' : 'none';
             });
-        }
-        
-        // 备份数据
-        function backupData() {
-            const backup = {
-                devices: devices,
-                users: users,
-                backupTime: new Date().toISOString()
-            };
-            
-            const dataStr = JSON.stringify(backup, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = `system_backup_${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            showToast('数据备份成功！');
-        }
-        
-        // 清空所有数据
-        function clearAllData() {
-            if (confirm('⚠️ 确定要清空所有数据吗？此操作不可撤销！')) {
-                devices = [];
-                users = users.filter(u => u.role === 'admin'); // 只保留管理员
-                loadDevices();
-                loadUsers();
-                updateStats();
-                showToast('所有数据已清空');
-            }
-        }
-        
-        // 更新设置
-        function updateSettings() {
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            if (newPassword && newPassword !== confirmPassword) {
-                showToast('两次输入的密码不一致');
-                return;
-            }
-            
-            if (newPassword) {
-                ADMIN_ACCOUNT.password = newPassword;
-                showToast('密码更新成功');
-                document.getElementById('newPassword').value = '';
-                document.getElementById('confirmPassword').value = '';
-            }
-            
-            showToast('设置保存成功');
         }
         
         // 显示Toast提示
