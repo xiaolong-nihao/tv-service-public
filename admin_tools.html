@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>设备授权管理系统 - 后台管理</title>
+    <title>设备授权管理系统</title>
     <style>
         :root {
             --primary: #4361ee;
@@ -105,11 +105,6 @@
             justify-content: space-between;
         }
         
-        .section-title i {
-            margin-right: 8px;
-            font-size: 18px;
-        }
-        
         .form-group {
             margin-bottom: 16px;
         }
@@ -156,11 +151,6 @@
             color: white;
         }
         
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
-        }
-        
         .btn-success {
             background: var(--success);
             color: white;
@@ -204,14 +194,6 @@
             transition: background 0.3s;
             font-size: 12px;
             align-items: center;
-        }
-        
-        .table-row:hover {
-            background: #f8f9fa;
-        }
-        
-        .table-row:last-child {
-            border-bottom: none;
         }
         
         .status-badge {
@@ -321,10 +303,6 @@
             flex: 1;
         }
         
-        .device-id-input button {
-            white-space: nowrap;
-        }
-        
         .device-details {
             margin-top: 10px;
             padding: 10px;
@@ -357,29 +335,36 @@
             text-align: center;
         }
         
-        .delete-confirm p {
+        .url-info {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .url-info h4 {
+            color: var(--primary);
             margin-bottom: 10px;
-            color: #dc2626;
-            font-weight: 500;
         }
         
-        .delete-confirm-buttons {
+        .url-item {
             display: flex;
-            gap: 10px;
-            justify-content: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
         }
         
-        .date-input {
-            display: flex;
-            gap: 10px;
+        .url-type {
+            font-weight: 600;
+            color: #555;
         }
         
-        .date-input input {
-            flex: 1;
-        }
-        
-        .date-input button {
-            white-space: nowrap;
+        .url-value {
+            color: #333;
+            word-break: break-all;
         }
         
         @media (min-width: 768px) {
@@ -429,6 +414,31 @@
                 </div>
             </div>
 
+            <!-- URL配置信息 -->
+            <div class="section">
+                <div class="section-title">
+                    <i>🌐</i> 服务地址配置
+                </div>
+                <div class="url-info">
+                    <h4>当前服务地址状态</h4>
+                    <div class="url-item">
+                        <span class="url-type">演示地址:</span>
+                        <span class="url-value" id="demoUrl">加载中...</span>
+                    </div>
+                    <div class="url-item">
+                        <span class="url-type">真实地址:</span>
+                        <span class="url-value" id="realUrl">加载中...</span>
+                    </div>
+                    <div class="url-item">
+                        <span class="url-type">默认模式:</span>
+                        <span class="url-value" id="defaultMode">加载中...</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="refreshConfig()" style="margin-top: 10px;">
+                        🔄 刷新配置
+                    </button>
+                </div>
+            </div>
+
             <!-- 控制面板 -->
             <div class="control-panel">
                 <div class="control-card">
@@ -474,37 +484,6 @@
                     </div>
                     <div id="devicesList">
                         <!-- 设备列表将通过JavaScript动态加载 -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- 系统设置 -->
-            <div class="section">
-                <div class="section-title">
-                    <i>⚙️</i> 系统设置
-                </div>
-                <div class="control-panel">
-                    <div class="control-card">
-                        <h4>数据管理</h4>
-                        <button class="btn btn-primary" onclick="backupData()" style="margin-bottom: 10px;">
-                            💾 备份数据
-                        </button>
-                        <button class="btn" onclick="importData()" style="background: #e2e8f0; margin-bottom: 10px;">
-                            📥 导入数据
-                        </button>
-                        <button class="btn btn-danger" onclick="showClearAllDataModal()">
-                            🗑️ 清空所有数据
-                        </button>
-                    </div>
-                    
-                    <div class="control-card">
-                        <h4>系统信息</h4>
-                        <div style="font-size: 13px; color: #666; line-height: 1.6;">
-                            <div>版本: v2.0.0</div>
-                            <div>最后更新: <span id="lastUpdateTime">-</span></div>
-                            <div>数据文件: authorized_devices.json</div>
-                            <div>设备数量: <span id="systemDeviceCount">0</span></div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -562,10 +541,7 @@
             
             <div class="form-group">
                 <label>延长至日期：</label>
-                <div class="date-input">
-                    <input type="date" id="extendToDate" class="form-control">
-                    <button class="btn" onclick="setDefaultExtendDate()" style="background: #e2e8f0;">默认</button>
-                </div>
+                <input type="date" id="extendToDate" class="form-control">
             </div>
             
             <div class="form-group">
@@ -600,34 +576,22 @@
         </div>
     </div>
 
-    <!-- 清空数据确认模态框 -->
-    <div id="clearAllDataModal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 15px; color: var(--danger);">⚠️ 清空数据确认</h3>
-            
-            <div style="text-align: center; padding: 20px;">
-                <p style="font-size: 16px; margin-bottom: 10px;">确定要清空所有数据吗？</p>
-                <p style="color: #666; margin-bottom: 20px;">此操作将删除所有设备记录，不可撤销！</p>
-                
-                <div class="delete-confirm-buttons">
-                    <button class="btn" onclick="closeClearAllDataModal()" style="background: #e2e8f0;">取消</button>
-                    <button class="btn btn-danger" onclick="confirmClearAllData()">确认清空</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         // 设备数据
         let devices = [];
         let currentEditDevice = null;
         let currentDeleteDevice = null;
+        let config = {
+            demo_url: "https://demo.example.com/api",
+            real_url: "https://real.example.com/api",
+            default_mode: "demo"
+        };
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
+            loadConfig();
             loadDevices();
             updateStats();
-            updateSystemInfo();
             
             // 监听套餐类型变化
             document.getElementById('newDevicePackage').addEventListener('change', function() {
@@ -639,6 +603,90 @@
                 }
             });
         });
+
+        // 加载配置文件
+        async function loadConfig() {
+            try {
+                // 这里替换为您的JSON配置文件地址
+                const configUrl = 'https://raw.githubusercontent.com/your-repo/config/main/config.json';
+                const response = await fetch(configUrl);
+                if (response.ok) {
+                    config = await response.json();
+                    updateConfigDisplay();
+                } else {
+                    console.warn('无法加载配置文件，使用默认配置');
+                }
+            } catch (error) {
+                console.warn('加载配置文件失败:', error);
+            }
+        }
+
+        // 更新配置显示
+        function updateConfigDisplay() {
+            document.getElementById('demoUrl').textContent = config.demo_url;
+            document.getElementById('realUrl').textContent = config.real_url;
+            document.getElementById('defaultMode').textContent = config.default_mode === 'demo' ? '演示模式' : '真实模式';
+        }
+
+        // 刷新配置
+        function refreshConfig() {
+            loadConfig();
+            showToast('✅ 配置已刷新');
+        }
+
+        // 获取设备应该访问的URL
+        function getDeviceAccessUrl(deviceId) {
+            const device = devices.find(d => d.device_id === deviceId);
+            if (!device) {
+                return config.default_mode === 'demo' ? config.demo_url : config.real_url;
+            }
+            
+            // 检查设备是否授权（有效期内）
+            const isExpired = new Date(device.expire_date) < new Date();
+            
+            if (isExpired) {
+                // 过期设备访问演示地址
+                return config.demo_url;
+            } else {
+                // 有效设备访问真实地址
+                return config.real_url;
+            }
+        }
+
+        // 生成设备访问令牌（示例）
+        function generateAccessToken(deviceId) {
+            const accessUrl = getDeviceAccessUrl(deviceId);
+            const tokenData = {
+                device_id: deviceId,
+                access_url: accessUrl,
+                timestamp: Date.now(),
+                expire_time: Date.now() + 24 * 60 * 60 * 1000 // 24小时有效
+            };
+            
+            // 在实际应用中，这里应该使用加密算法生成token
+            return btoa(JSON.stringify(tokenData));
+        }
+
+        // 为设备生成访问信息
+        function generateDeviceAccessInfo(deviceId) {
+            const accessUrl = getDeviceAccessUrl(deviceId);
+            const token = generateAccessToken(deviceId);
+            
+            return {
+                device_id: deviceId,
+                access_url: accessUrl,
+                access_token: token,
+                is_authorized: isDeviceAuthorized(deviceId)
+            };
+        }
+
+        // 检查设备是否授权
+        function isDeviceAuthorized(deviceId) {
+            const device = devices.find(d => d.device_id === deviceId);
+            if (!device) return false;
+            
+            return new Date(device.expire_date) >= new Date();
+        }
 
         // 加载设备数据
         function loadDevices() {
@@ -653,7 +701,7 @@
                         contact: "13800138000",
                         package: "季卡",
                         activate_date: "2024-01-01",
-                        expire_date: "2024-04-01",
+                        expire_date: "2024-12-31",
                         status: "active"
                     },
                     {
@@ -662,7 +710,7 @@
                         package: "月卡",
                         activate_date: "2024-01-10",
                         expire_date: "2024-02-09",
-                        status: "active"
+                        status: "expired"
                     }
                 ];
                 saveDevices();
@@ -674,7 +722,6 @@
         function saveDevices() {
             localStorage.setItem('authorized_devices', JSON.stringify(devices));
             updateStats();
-            updateSystemInfo();
         }
 
         // 渲染设备列表
@@ -699,6 +746,7 @@
             devicesToRender.forEach(device => {
                 const isExpired = new Date(device.expire_date) < new Date();
                 const daysRemaining = Math.ceil((new Date(device.expire_date) - new Date()) / (1000 * 60 * 60 * 24));
+                const accessInfo = generateDeviceAccessInfo(device.device_id);
                 
                 let statusClass = 'status-active';
                 let statusText = '有效';
@@ -717,17 +765,21 @@
                     <div>
                         <strong>${device.device_id}</strong>
                         <div style="font-size: 11px; color: #666;">${device.package}</div>
-                        <div style="font-size: 11px; color: #666;">到期: ${device.expire_date}</div>
+                        <div style="font-size: 11px; color: #666;">访问: ${accessInfo.is_authorized ? '真实地址' : '演示地址'}</div>
                     </div>
                     <div>
                         <div>${device.contact}</div>
-                        <div style="font-size: 11px; color: #666;">激活: ${device.activate_date}</div>
+                        <div style="font-size: 11px; color: #666;">到期: ${device.expire_date}</div>
                         <div><span class="status-badge ${statusClass}">${statusText}</span></div>
                     </div>
                     <div class="action-buttons">
                         <button class="btn" onclick="editDevice('${device.device_id}')" 
                                 style="background: var(--primary); color: white; padding: 6px 10px; font-size: 11px;">
                             ✏️ 编辑
+                        </button>
+                        <button class="btn" onclick="showAccessInfo('${device.device_id}')" 
+                                style="background: var(--success); color: white; padding: 6px 10px; font-size: 11px;">
+                            🔗 访问信息
                         </button>
                         <button class="btn" onclick="showDeleteConfirmModal('${device.device_id}')" 
                                 style="background: var(--danger); color: white; padding: 6px 10px; font-size: 11px;">
@@ -737,6 +789,18 @@
                 `;
                 devicesList.appendChild(row);
             });
+        }
+
+        // 显示设备访问信息
+        function showAccessInfo(deviceId) {
+            const accessInfo = generateDeviceAccessInfo(deviceId);
+            const infoText = `设备访问信息：
+设备ID: ${accessInfo.device_id}
+访问地址: ${accessInfo.access_url}
+授权状态: ${accessInfo.is_authorized ? '已授权' : '未授权'}
+访问令牌: ${accessInfo.access_token}`;
+            
+            alert(infoText);
         }
 
         // 更新统计信息
@@ -755,12 +819,6 @@
             document.getElementById('activeDevices').textContent = active;
             document.getElementById('expiredDevices').textContent = expired;
             document.getElementById('warningDevices').textContent = warning;
-        }
-
-        // 更新系统信息
-        function updateSystemInfo() {
-            document.getElementById('systemDeviceCount').textContent = devices.length;
-            document.getElementById('lastUpdateTime').textContent = new Date().toLocaleString();
         }
 
         // 搜索设备
@@ -871,6 +929,7 @@
             // 显示设备详情
             const isExpired = new Date(device.expire_date) < new Date();
             const daysRemaining = Math.ceil((new Date(device.expire_date) - new Date()) / (1000 * 60 * 60 * 24));
+            const accessInfo = generateDeviceAccessInfo(deviceId);
             
             let statusText = '有效';
             if (isExpired) {
@@ -904,23 +963,19 @@
                     <span class="label">状态:</span>
                     <span class="value">${statusText} ${!isExpired ? `(剩余 ${daysRemaining} 天)` : ''}</span>
                 </div>
+                <div class="row">
+                    <span class="label">访问地址:</span>
+                    <span class="value">${accessInfo.access_url}</span>
+                </div>
             `;
             
             // 设置默认延长日期
-            setDefaultExtendDate();
-            
-            document.getElementById('editDeviceModal').style.display = 'flex';
-        }
-
-        // 设置默认延长日期
-        function setDefaultExtendDate() {
-            if (!currentEditDevice) return;
-            
-            const currentExpireDate = new Date(currentEditDevice.expire_date);
+            const currentExpireDate = new Date(device.expire_date);
             currentExpireDate.setDate(currentExpireDate.getDate() + 30);
-            
             const formattedDate = currentExpireDate.toISOString().split('T')[0];
             document.getElementById('extendToDate').value = formattedDate;
+            
+            document.getElementById('editDeviceModal').style.display = 'flex';
         }
 
         // 关闭编辑设备模态框
@@ -1081,31 +1136,6 @@
             showToast('✅ 数据导出成功');
         }
 
-        // 备份数据
-        function backupData() {
-            exportData(); // 复用导出功能
-        }
-
-        // 显示清空数据确认模态框
-        function showClearAllDataModal() {
-            document.getElementById('clearAllDataModal').style.display = 'flex';
-        }
-
-        // 关闭清空数据确认模态框
-        function closeClearAllDataModal() {
-            document.getElementById('clearAllDataModal').style.display = 'none';
-        }
-
-        // 确认清空所有数据
-        function confirmClearAllData() {
-            devices = [];
-            saveDevices();
-            renderDevices();
-            closeClearAllDataModal();
-            
-            showToast('✅ 所有数据已清空');
-        }
-
         // 刷新数据
         function refreshData() {
             renderDevices();
@@ -1132,7 +1162,6 @@
             const addModal = document.getElementById('addDeviceModal');
             const editModal = document.getElementById('editDeviceModal');
             const deleteModal = document.getElementById('deleteConfirmModal');
-            const clearModal = document.getElementById('clearAllDataModal');
             
             if (event.target === addModal) {
                 closeAddDeviceModal();
@@ -1142,9 +1171,6 @@
             }
             if (event.target === deleteModal) {
                 closeDeleteConfirmModal();
-            }
-            if (event.target === clearModal) {
-                closeClearAllDataModal();
             }
         }
     </script>
