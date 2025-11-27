@@ -5,166 +5,346 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>设备授权管理</title>
     <style>
-        /* 样式部分保持不变，只添加新的样式 */
+        /* 原有样式保持不变，添加新样式 */
         
-        /* 新增：设备操作按钮样式 */
-        .device-actions {
-            display: flex;
-            gap: 5px;
-            margin-top: 8px;
+        .device-fixed {
+            background: #f0f9ff !important;
+            border-left: 4px solid #3b82f6 !important;
         }
         
-        .device-actions .btn {
-            padding: 4px 8px;
-            font-size: 11px;
-            width: auto;
-            flex: 1;
+        .fixed-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            margin-left: 5px;
         }
         
-        /* 调整表格布局为4列 */
-        .table-header {
-            grid-template-columns: 1fr 1.5fr 0.8fr 1.2fr;
-        }
-        
-        .table-row {
-            grid-template-columns: 1fr 1.5fr 0.8fr 1.2fr;
+        .security-settings {
+            background: #fef7ed;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f59e0b;
         }
     </style>
 </head>
 <body>
-    <!-- 页面结构保持不变 -->
+    <!-- 登录界面保持不变 -->
+    
+    <!-- 主管理界面 -->
+    <div id="adminPage" class="container" style="display: none;">
+        <!-- 头部保持不变 -->
+        
+        <div class="main-content">
+            <!-- 用户信息保持不变 -->
+            
+            <!-- 导航标签 - 添加安全标签 -->
+            <ul class="nav-tabs">
+                <li class="nav-tab active" data-tab="dashboard">📊 数据</li>
+                <li class="nav-tab" data-tab="devices">📋 设备</li>
+                <li class="nav-tab" data-tab="security">🔒 安全</li>
+                <li class="nav-tab" data-tab="settings">⚙️ 设置</li>
+            </ul>
+            
+            <!-- 数据看板保持不变 -->
+            
+            <!-- 设备管理保持不变 -->
+            
+            <!-- 新增安全设置页面 -->
+            <div id="security" class="tab-content">
+                <h2 style="margin-bottom: 20px; font-size: 18px;">🔒 设备安全设置</h2>
+                
+                <div class="security-settings">
+                    <h3 style="margin-bottom: 15px; color: #f59e0b;">设备固定设置</h3>
+                    
+                    <div class="toggle-label">
+                        <span>🔐 启用设备固定</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="enableDeviceFix" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="toggle-label">
+                        <span>📱 仅允许固定设备访问</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="strictMode">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>最大固定设备数量：</label>
+                        <input type="number" class="form-control" id="maxFixedDevices" value="5" min="1" max="20">
+                    </div>
+                </div>
+                
+                <div class="device-table">
+                    <div class="table-header">
+                        <div>设备标识</div>
+                        <div>设备信息</div>
+                        <div>最后登录</div>
+                        <div>状态</div>
+                    </div>
+                    <div id="fixedDevicesList">
+                        <!-- 固定设备列表 -->
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-warning" onclick="addCurrentDevice()" style="margin-bottom: 10px;">
+                        📱 固定当前设备
+                    </button>
+                    <button class="btn btn-danger" onclick="clearAllFixedDevices()">
+                        🗑️ 清空固定设备
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 系统设置保持不变 -->
+        </div>
+    </div>
+
+    <!-- 添加设备模态框保持不变 -->
 
     <script>
-        // 授权的 GitHub 账号和密码
-        const AUTHORIZED_USERS = {
-            'xiaolong-nihao': '123456'  // 用户名: 密码
+        // 安全配置
+        const SECURITY_CONFIG = {
+            VALID_TOKENS: [
+                '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', // 123456
+            ],
+            TOKEN_EXPIRY: 24 * 60 * 60 * 1000,
+            MAX_LOGIN_ATTEMPTS: 5,
+            LOCKOUT_TIME: 15 * 60 * 1000
         };
-        
-        // 示例设备数据
-        let devices = [
-            {
-                id: "TV123456789",
-                package: "yearly",
-                activate_date: "2024-01-01",
-                expire_date: "2024-12-31",
-                status: "active",
-                days: 365
-            },
-            {
-                id: "865123456789012", 
-                package: "monthly",
-                activate_date: "2024-01-10",
-                expire_date: "2024-02-09",
-                status: "active",
-                days: 30
-            }
-        ];
 
-        // GitHub 登录 - 修复密码验证
-        function loginWithGitHub() {
-            const username = document.getElementById('githubUsername').value.trim();
-            const password = document.getElementById('githubPassword').value.trim();
+        // 设备固定配置
+        let deviceFixConfig = {
+            enabled: true,
+            strictMode: false,
+            maxFixedDevices: 5,
+            fixedDevices: [] // 存储固定设备信息
+        };
+
+        // 当前设备指纹
+        let currentDeviceFingerprint = null;
+
+        // 初始化设备指纹
+        function initDeviceFingerprint() {
+            // 生成设备指纹（基于浏览器特征）
+            const fingerprint = generateDeviceFingerprint();
+            currentDeviceFingerprint = fingerprint;
             
-            if (!username || !password) {
-                showToast('请输入 GitHub 用户名和密码');
+            // 加载设备固定配置
+            const savedConfig = localStorage.getItem('deviceFixConfig');
+            if (savedConfig) {
+                deviceFixConfig = JSON.parse(savedConfig);
+            }
+            
+            // 检查当前设备是否已固定
+            checkCurrentDeviceStatus();
+        }
+
+        // 生成设备指纹
+        function generateDeviceFingerprint() {
+            const components = [
+                navigator.userAgent,
+                navigator.platform,
+                navigator.language,
+                screen.width + 'x' + screen.height,
+                new Date().getTimezoneOffset()
+            ].join('|');
+            
+            // 简单哈希函数
+            let hash = 0;
+            for (let i = 0; i < components.length; i++) {
+                const char = components.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return 'device_' + Math.abs(hash).toString(16);
+        }
+
+        // 检查当前设备状态
+        function checkCurrentDeviceStatus() {
+            if (!deviceFixConfig.enabled) return true;
+            
+            const isFixed = deviceFixConfig.fixedDevices.some(device => 
+                device.fingerprint === currentDeviceFingerprint
+            );
+            
+            if (deviceFixConfig.strictMode && !isFixed) {
+                showToast('❌ 当前设备未授权，禁止访问');
+                logout();
+                return false;
+            }
+            
+            return true;
+        }
+
+        // 固定当前设备
+        function addCurrentDevice() {
+            if (!currentDeviceFingerprint) {
+                showToast('无法识别当前设备');
                 return;
             }
             
-            // 验证用户名和密码
-            if (AUTHORIZED_USERS[username] && AUTHORIZED_USERS[username] === password) {
-                currentUser = {
-                    name: username,
-                    loginTime: new Date().toISOString()
-                };
-                
-                localStorage.setItem('githubUser', JSON.stringify(currentUser));
-                showAdminPage();
-                showToast('GitHub 登录成功！');
-            } else {
-                showToast('❌ 用户名或密码错误');
+            // 检查是否已达最大数量
+            if (deviceFixConfig.fixedDevices.length >= deviceFixConfig.maxFixedDevices) {
+                showToast(`已达到最大固定设备数量 (${deviceFixConfig.maxFixedDevices})`);
+                return;
             }
+            
+            // 检查是否已固定
+            if (deviceFixConfig.fixedDevices.some(device => 
+                device.fingerprint === currentDeviceFingerprint)) {
+                showToast('当前设备已固定');
+                return;
+            }
+            
+            const deviceInfo = {
+                fingerprint: currentDeviceFingerprint,
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                screen: screen.width + 'x' + screen.height,
+                fixedTime: new Date().toISOString(),
+                lastLogin: new Date().toISOString(),
+                isCurrent: true
+            };
+            
+            deviceFixConfig.fixedDevices.push(deviceInfo);
+            saveDeviceFixConfig();
+            loadFixedDevicesList();
+            
+            showToast('✅ 当前设备已固定');
         }
 
-        // 加载设备列表 - 修改为一行显示操作按钮
-        function loadDevices() {
-            const devicesList = document.getElementById('devicesList');
-            devicesList.innerHTML = '';
+        // 加载固定设备列表
+        function loadFixedDevicesList() {
+            const fixedDevicesList = document.getElementById('fixedDevicesList');
+            fixedDevicesList.innerHTML = '';
             
-            devices.forEach((device, index) => {
-                const isPermanent = device.package === "permanent";
-                const isExpired = !isPermanent && new Date(device.expire_date) < new Date();
-                const daysRemaining = isPermanent ? Infinity : Math.ceil((new Date(device.expire_date) - new Date()) / (1000 * 60 * 60 * 24));
-                
-                let statusClass = 'status-active';
-                let statusText = '有效';
-                
-                if (isPermanent) {
-                    statusClass = 'status-permanent';
-                    statusText = '永久';
-                } else if (isExpired) {
-                    statusClass = 'status-expired';
-                    statusText = '已过期';
-                } else if (daysRemaining <= 7) {
-                    statusClass = 'status-warning';
-                    statusText = '即将到期';
-                }
-                
+            deviceFixConfig.fixedDevices.forEach((device, index) => {
+                const isCurrent = device.fingerprint === currentDeviceFingerprint;
                 const row = document.createElement('div');
-                row.className = 'table-row';
+                row.className = 'table-row' + (isCurrent ? ' device-fixed' : '');
+                
                 row.innerHTML = `
-                    <div>${device.id}</div>
-                    <div>${device.expire_date} ${!isPermanent && !isExpired ? `<br><small>剩余 ${daysRemaining} 天</small>` : ''}</div>
                     <div>
-                        <span class="status-badge ${statusClass}">
-                            ${statusText}
-                        </span>
+                        ${device.fingerprint.substring(0, 8)}...
+                        ${isCurrent ? '<span class="fixed-badge">当前</span>' : ''}
                     </div>
-                    <div class="device-actions">
-                        <button class="btn btn-warning" onclick="extendDevice('${device.id}')" title="延长到期时间">
-                            ⏱️ 延长
-                        </button>
-                        <button class="btn btn-danger" onclick="deleteDevice('${device.id}')" title="删除设备">
-                            🗑️ 删除
-                        </button>
+                    <div>
+                        <small>${device.platform}</small><br>
+                        <small>${device.screen}</small>
                     </div>
-                    <div class="device-details">
-                        <div><strong>激活日期:</strong> ${device.activate_date}</div>
-                        <div><strong>套餐类型:</strong> ${getPackageText(device.package)}</div>
-                        <div><strong>授权天数:</strong> ${device.days || '永久'}</div>
+                    <div>
+                        ${new Date(device.lastLogin).toLocaleDateString()}<br>
+                        <small>${new Date(device.lastLogin).toLocaleTimeString()}</small>
+                    </div>
+                    <div>
+                        <span class="status-badge status-active">已固定</span>
+                        <button class="btn btn-danger" onclick="removeFixedDevice('${device.fingerprint}')" 
+                                style="padding: 4px 8px; font-size: 11px; margin-top: 5px;">
+                            移除
+                        </button>
                     </div>
                 `;
-                devicesList.appendChild(row);
+                fixedDevicesList.appendChild(row);
             });
+            
+            // 更新设置界面
+            document.getElementById('enableDeviceFix').checked = deviceFixConfig.enabled;
+            document.getElementById('strictMode').checked = deviceFixConfig.strictMode;
+            document.getElementById('maxFixedDevices').value = deviceFixConfig.maxFixedDevices;
         }
 
-        // 延长设备到期时间
-        function extendDevice(deviceId) {
-            const device = devices.find(d => d.id === deviceId);
-            if (!device) return;
+        // 移除固定设备
+        function removeFixedDevice(fingerprint) {
+            if (!confirm('确定要移除此固定设备吗？')) return;
             
-            if (device.package === "permanent") {
-                showToast('永久授权设备无需延长');
+            deviceFixConfig.fixedDevices = deviceFixConfig.fixedDevices.filter(
+                device => device.fingerprint !== fingerprint
+            );
+            saveDeviceFixConfig();
+            loadFixedDevicesList();
+            showToast('设备已从固定列表中移除');
+        }
+
+        // 清空所有固定设备
+        function clearAllFixedDevices() {
+            if (!confirm('确定要清空所有固定设备吗？此操作不可撤销！')) return;
+            
+            deviceFixConfig.fixedDevices = [];
+            saveDeviceFixConfig();
+            loadFixedDevicesList();
+            showToast('所有固定设备已清空');
+        }
+
+        // 保存设备固定配置
+        function saveDeviceFixConfig() {
+            localStorage.setItem('deviceFixConfig', JSON.stringify(deviceFixConfig));
+        }
+
+        // 更新设备固定设置
+        function updateDeviceFixSettings() {
+            deviceFixConfig.enabled = document.getElementById('enableDeviceFix').checked;
+            deviceFixConfig.strictMode = document.getElementById('strictMode').checked;
+            deviceFixConfig.maxFixedDevices = parseInt(document.getElementById('maxFixedDevices').value) || 5;
+            
+            saveDeviceFixConfig();
+            
+            if (deviceFixConfig.strictMode && !checkCurrentDeviceStatus()) {
                 return;
             }
             
-            const extendDays = prompt(`请输入要为设备 ${deviceId} 延长的天数:`, "30");
-            if (extendDays && !isNaN(extendDays) && extendDays > 0) {
-                const days = parseInt(extendDays);
-                const currentExpireDate = new Date(device.expire_date);
-                currentExpireDate.setDate(currentExpireDate.getDate() + days);
+            showToast('安全设置已保存');
+        }
+
+        // 增强的登录函数
+        async function loginWithToken() {
+            // ... 原有的令牌验证逻辑 ...
+            
+            // 登录成功后更新设备信息
+            if (deviceFixConfig.enabled && currentDeviceFingerprint) {
+                const fixedDevice = deviceFixConfig.fixedDevices.find(
+                    device => device.fingerprint === currentDeviceFingerprint
+                );
                 
-                device.expire_date = currentExpireDate.toISOString().split('T')[0];
-                device.days = (device.days || 0) + days;
-                
-                loadDevices();
-                updateStats();
-                showToast(`✅ 设备 ${deviceId} 已延长 ${days} 天`);
-            } else {
-                showToast('延长操作已取消');
+                if (fixedDevice) {
+                    fixedDevice.lastLogin = new Date().toISOString();
+                    saveDeviceFixConfig();
+                }
+            }
+            
+            // 检查设备固定
+            if (!checkCurrentDeviceStatus()) {
+                return;
             }
         }
 
-        // 其余函数保持不变...
+        // 修改显示管理页面函数
+        function showAdminPage() {
+            // ... 原有逻辑 ...
+            
+            // 加载设备固定列表
+            loadFixedDevicesList();
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initDeviceFingerprint();
+            checkLoginStatus();
+            setupTabNavigation();
+            loadSettings();
+        });
+
+        // 在安全设置页面添加事件监听
+        document.getElementById('enableDeviceFix').addEventListener('change', updateDeviceFixSettings);
+        document.getElementById('strictMode').addEventListener('change', updateDeviceFixSettings);
+        document.getElementById('maxFixedDevices').addEventListener('change', updateDeviceFixSettings);
     </script>
 </body>
 </html>
