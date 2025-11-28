@@ -2,1382 +2,734 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>设备授权管理系统</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV设备授权管理系统</title>
     <style>
         :root {
-            --primary: #3498db;
-            --secondary: #2c3e50;
-            --success: #2ecc71;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-            --light: #ecf0f1;
-            --dark: #34495e;
-            --gray: #95a5a6;
-            --bg-color: #f5f7fa;
-            --card-bg: #ffffff;
-            --text-primary: #2c3e50;
-            --text-secondary: #7f8c8d;
-            --border-color: #dcdde1;
-            --shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-            --radius: 10px;
+            --primary: #007cba;
+            --primary-dark: #005a87;
+            --success: #28a745;
+            --success-dark: #218838;
+            --danger: #dc3545;
+            --danger-dark: #c82333;
+            --warning: #ffc107;
+            --warning-dark: #e0a800;
+            --info: #17a2b8;
+            --info-dark: #138496;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gray: #6c757d;
+            --border-radius: 6px;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
         }
-
+        
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            -webkit-tap-highlight-color: transparent;
         }
-
+        
         body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-size: 14px;
-            line-height: 1.5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
-            padding: 0;
-        }
-
-        /* 移动端布局 */
-        .mobile-container {
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 15px;
-        }
-
-        /* 移动端头部 */
-        .mobile-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            border-radius: var(--radius);
             padding: 20px;
-            margin-bottom: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
             box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
         }
-
-        .mobile-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 150px;
-            height: 150px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-        }
-
-        .mobile-header h1 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .mobile-header p {
-            font-size: 13px;
-            opacity: 0.9;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            margin-top: 10px;
-        }
-
-        .user-info img {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            margin-right: 10px;
-        }
-
-        /* 统计卡片 */
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            padding: 15px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:active {
-            transform: scale(0.98);
-        }
-
-        .stat-card.total {
-            border-top: 4px solid var(--primary);
-        }
-
-        .stat-card.authorized {
-            border-top: 4px solid var(--success);
-        }
-
-        .stat-card.pending {
-            border-top: 4px solid var(--warning);
-        }
-
-        .stat-card.expired {
-            border-top: 4px solid var(--danger);
-        }
-
-        .stat-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-
-        .stat-card.total .stat-icon {
-            background: rgba(52, 152, 219, 0.15);
-            color: var(--primary);
-        }
-
-        .stat-card.authorized .stat-icon {
-            background: rgba(46, 204, 113, 0.15);
-            color: var(--success);
-        }
-
-        .stat-card.pending .stat-icon {
-            background: rgba(243, 156, 18, 0.15);
-            color: var(--warning);
-        }
-
-        .stat-card.expired .stat-icon {
-            background: rgba(231, 76, 60, 0.15);
-            color: var(--danger);
-        }
-
-        .stat-number {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        /* 卡片样式 */
-        .card {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-
-        .card-header {
-            padding: 15px;
-            background: var(--light);
-            border-bottom: 1px solid var(--border-color);
+        
+        header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
         }
-
-        .card-header h3 {
-            color: var(--secondary);
-            font-weight: 600;
-            font-size: 16px;
+        
+        h1 {
+            color: var(--dark);
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo {
+            font-size: 32px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border-left: 4px solid;
+        }
+        
+        .stats-card {
+            border-left-color: var(--warning);
+            background: linear-gradient(to right, #fff3cd 0%, #fff 100%);
+        }
+        
+        .add-card {
+            border-left-color: var(--success);
+            background: linear-gradient(to right, #e7f3ff 0%, #fff 100%);
+        }
+        
+        .instructions-card {
+            border-left-color: var(--info);
+            background: linear-gradient(to right, #d1ecf1 0%, #fff 100%);
+        }
+        
+        .devices-card {
+            border-left-color: var(--primary);
+        }
+        
+        h2, h3 {
+            color: var(--dark);
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
-
-        .card-body {
-            padding: 15px;
+        
+        .card p {
+            margin-bottom: 10px;
         }
-
-        /* 搜索框 */
-        .search-box {
-            display: flex;
-            gap: 10px;
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
             margin-bottom: 15px;
         }
-
-        .search-input {
-            flex: 1;
-            padding: 12px 15px;
-            border: 1.5px solid var(--border-color);
-            border-radius: 8px;
+        
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .stat-label {
             font-size: 14px;
-            background: var(--light);
-            transition: all 0.3s;
+            color: var(--gray);
         }
-
-        .search-input:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-        }
-
-        /* 按钮样式 */
-        .btn {
-            display: inline-flex;
+        
+        .form-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px 14px;
+            margin-bottom: 15px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 124, 186, 0.2);
+        }
+        
+        .btn {
+            padding: 12px 20px;
             border: none;
-            border-radius: 8px;
-            font-size: 13px;
+            border-radius: var(--border-radius);
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            min-height: 44px;
-            touch-action: manipulation;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
-
-        .btn-block {
-            width: 100%;
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
-
+        
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, #2980b9 100%);
+            background: var(--primary);
             color: white;
         }
-
+        
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+        }
+        
         .btn-success {
             background: var(--success);
             color: white;
         }
-
+        
+        .btn-success:hover:not(:disabled) {
+            background: var(--success-dark);
+        }
+        
         .btn-danger {
             background: var(--danger);
             color: white;
         }
-
+        
+        .btn-danger:hover:not(:disabled) {
+            background: var(--danger-dark);
+        }
+        
         .btn-warning {
             background: var(--warning);
+            color: var(--dark);
+        }
+        
+        .btn-warning:hover:not(:disabled) {
+            background: var(--warning-dark);
+        }
+        
+        .btn-info {
+            background: var(--info);
             color: white;
         }
-
-        .btn-outline {
-            background: transparent;
-            border: 1.5px solid var(--border-color);
-            color: var(--text-primary);
+        
+        .btn-info:hover:not(:disabled) {
+            background: var(--info-dark);
         }
-
-        .btn-sm {
-            padding: 8px 12px;
-            font-size: 12px;
-            min-height: 36px;
+        
+        .device-list {
+            margin-top: 15px;
         }
-
-        .btn:active {
-            transform: translateY(2px);
-        }
-
-        /* 设备列表 */
-        .devices-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .device-card {
-            background: var(--light);
-            border-radius: 8px;
-            padding: 15px;
-            border-left: 4px solid var(--primary);
-            transition: all 0.3s;
-        }
-
-        .device-card:active {
-            transform: scale(0.99);
-        }
-
-        .device-card.expired {
-            border-left-color: var(--danger);
-            opacity: 0.8;
-        }
-
-        .device-card.pending {
-            border-left-color: var(--warning);
-        }
-
-        .device-header {
+        
+        .device-item {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
+            padding: 15px;
+            background: var(--light);
+            border-radius: var(--border-radius);
             margin-bottom: 10px;
+            border: 1px solid #e9ecef;
+            transition: var(--transition);
         }
-
+        
+        .device-item:hover {
+            background: #f1f3f4;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
         .device-id {
-            font-weight: 700;
-            font-size: 15px;
-            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            flex: 1;
+            margin-right: 15px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-
-        .device-status {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .status-active {
-            background: rgba(46, 204, 113, 0.15);
-            color: var(--success);
-        }
-
-        .status-inactive {
-            background: rgba(231, 76, 60, 0.15);
-            color: var(--danger);
-        }
-
-        .status-pending {
-            background: rgba(243, 156, 18, 0.15);
-            color: var(--warning);
-        }
-
-        .device-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .device-detail {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .detail-label {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-bottom: 2px;
-        }
-
-        .detail-value {
-            font-size: 13px;
-            font-weight: 500;
-        }
-
+        
         .device-actions {
             display: flex;
             gap: 8px;
         }
-
-        .device-actions .btn {
-            flex: 1;
-            padding: 8px 12px;
-            font-size: 12px;
-            min-height: 36px;
-        }
-
-        /* 底部导航 */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--card-bg);
-            display: flex;
-            padding: 10px 15px;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-        }
-
-        .nav-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 8px 5px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 11px;
-            transition: all 0.3s;
-        }
-
-        .nav-item.active {
-            color: var(--primary);
-        }
-
-        .nav-icon {
-            font-size: 18px;
-            margin-bottom: 4px;
-        }
-
-        /* 空状态 */
+        
         .empty-state {
             text-align: center;
             padding: 40px 20px;
-            color: var(--text-secondary);
+            color: var(--gray);
         }
-
-        .empty-icon {
+        
+        .empty-state-icon {
             font-size: 48px;
             margin-bottom: 15px;
             opacity: 0.5;
         }
-
-        .empty-text {
-            font-size: 16px;
-            margin-bottom: 20px;
+        
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: var(--gray);
         }
-
-        /* 模态框 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 15px;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            width: 100%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            animation: modalAppear 0.3s ease;
-        }
-
-        @keyframes modalAppear {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .modal-header {
-            padding: 20px 20px 10px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-title {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 20px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        .modal-body {
-            padding: 20px;
-        }
-
-        .modal-footer {
-            padding: 10px 20px 20px;
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        /* 表单元素 */
-        .form-group {
+        
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(0, 124, 186, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
             margin-bottom: 15px;
         }
-
-        .form-label {
-            display: block;
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error {
+            color: var(--danger);
+            padding: 15px;
+            background: #fee;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            border-left: 4px solid var(--danger);
+        }
+        
+        .success {
+            color: var(--success);
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
+            border-left: 4px solid;
+        }
+        
+        .alert-info {
+            color: var(--info);
+            background: #e1f5fe;
+            border-left-color: var(--info);
+        }
+        
+        .instructions-list {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .instructions-list li {
             margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--text-primary);
         }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1.5px solid var(--border-color);
-            border-radius: 8px;
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 20px;
+            margin-left: 8px;
+        }
+        
+        .badge-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .badge-warning {
+            background: var(--warning);
+            color: var(--dark);
+        }
+        
+        .badge-info {
+            background: var(--info);
+            color: white;
+        }
+        
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
             font-size: 14px;
-            background: var(--light);
-            transition: all 0.3s;
+            color: var(--gray);
         }
-
-        .form-control:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
         }
-
-        /* 响应式设计 */
-        @media (min-width: 768px) {
-            .mobile-container {
-                max-width: 750px;
-                padding: 20px;
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--success);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
             }
             
-            .stats-container {
-                grid-template-columns: repeat(4, 1fr);
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
             }
             
-            .device-details {
-                grid-template-columns: repeat(4, 1fr);
+            .form-group {
+                flex-direction: column;
+                align-items: stretch;
             }
-        }
-
-        /* 暗色模式支持 */
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-color: #1a202c;
-                --card-bg: #2d3748;
-                --text-primary: #f7fafc;
-                --text-secondary: #cbd5e0;
-                --border-color: #4a5568;
-                --light: #4a5568;
+            
+            input[type="text"] {
+                min-width: auto;
+            }
+            
+            .device-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .device-id {
+                margin-right: 0;
+                width: 100%;
+            }
+            
+            .device-actions {
+                width: 100%;
+                justify-content: flex-end;
             }
         }
     </style>
 </head>
 <body>
-    <div class="mobile-container">
-        <!-- 移动端头部 -->
-        <header class="mobile-header">
-            <h1><i class="fas fa-key"></i> 设备授权管理系统</h1>
-            <p>专业设备授权管理平台</p>
-            <div class="user-info">
-                <img src="https://ui-avatars.com/api/?name=管理员&background=3498db&color=fff" alt="用户头像">
-                <span>管理员</span>
+    <div class="container">
+        <header>
+            <h1><span class="logo">📱</span> TV设备授权管理系统</h1>
+            <div class="auto-refresh">
+                <label class="switch">
+                    <input type="checkbox" id="autoRefresh" checked>
+                    <span class="slider"></span>
+                </label>
+                <span>自动刷新</span>
             </div>
         </header>
-
-        <!-- 统计卡片 -->
-        <div class="stats-container">
-            <div class="stat-card total">
-                <div class="stat-icon">
-                    <i class="fas fa-laptop"></i>
+        
+        <div class="card stats-card">
+            <h2><span>📊</span> 系统状态</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="deviceCount">0</div>
+                    <div class="stat-label">已授权设备</div>
                 </div>
-                <div class="stat-number" id="totalDevices">156</div>
-                <div class="stat-label">总设备数</div>
-            </div>
-            <div class="stat-card authorized">
-                <div class="stat-icon">
-                    <i class="fas fa-check-circle"></i>
+                <div class="stat-item">
+                    <div class="stat-value" id="lastUpdate">-</div>
+                    <div class="stat-label">最后更新</div>
                 </div>
-                <div class="stat-number" id="authorizedDevices">128</div>
-                <div class="stat-label">已授权设备</div>
-            </div>
-            <div class="stat-card pending">
-                <div class="stat-icon">
-                    <i class="fas fa-exclamation-triangle"></i>
+                <div class="stat-item">
+                    <div class="stat-value" id="systemStatus">正常</div>
+                    <div class="stat-label">系统状态</div>
                 </div>
-                <div class="stat-number" id="pendingDevices">18</div>
-                <div class="stat-label">待授权设备</div>
             </div>
-            <div class="stat-card expired">
-                <div class="stat-icon">
-                    <i class="fas fa-times-circle"></i>
-                </div>
-                <div class="stat-number" id="expiredDevices">10</div>
-                <div class="stat-label">授权过期</div>
-            </div>
+            <button class="btn btn-warning" onclick="loadDevices()">
+                <span>🔄</span> 刷新列表
+            </button>
         </div>
-
-        <!-- 设备管理 -->
-        <div class="card">
-            <div class="card-header">
-                <h3><i class="fas fa-laptop"></i> 设备列表</h3>
-                <button class="btn btn-primary btn-sm" onclick="showAddDeviceModal()">
-                    <i class="fas fa-plus"></i> 添加
+        
+        <div class="card add-card">
+            <h2><span>➕</span> 添加新设备</h2>
+            <div class="form-group">
+                <input type="text" id="newDeviceId" placeholder="输入设备ID，如：TV_1700000000000_abc123">
+                <button class="btn btn-success" onclick="addDevice()">
+                    <span>✅</span> 添加授权
+                </button>
+                <button class="btn btn-info" onclick="generateDeviceId()">
+                    <span>🆔</span> 生成设备ID
                 </button>
             </div>
-            <div class="card-body">
-                <div class="search-box">
-                    <input type="text" class="search-input" id="searchInput" placeholder="搜索设备...">
-                    <button class="btn btn-primary" onclick="searchDevices()">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-                <div class="devices-list" id="devicesList">
-                    <!-- 设备列表将通过JavaScript动态加载 -->
-                </div>
+            <div class="alert alert-info">
+                <strong>提示：</strong> 设备ID格式为 TV_时间戳_随机字符，例如：TV_1700000000000_abc123def
             </div>
         </div>
-
-        <!-- 授权管理 -->
-        <div class="card">
-            <div class="card-header">
-                <h3><i class="fas fa-key"></i> 授权管理</h3>
-                <button class="btn btn-primary btn-sm" onclick="generateAuthCode()">
-                    <i class="fas fa-plus"></i> 生成
-                </button>
+        
+        <div class="card instructions-card">
+            <h2><span>📋</span> 使用说明</h2>
+            <ul class="instructions-list">
+                <li>用户打开TV软件，在界面中找到设备ID</li>
+                <li>将设备ID在此页面添加授权</li>
+                <li>用户重启TV软件即可看到完整内容</li>
+                <li>可随时删除设备授权</li>
+            </ul>
+            <div class="alert alert-info">
+                <strong>注意：</strong> 添加/删除设备需要在GitHub页面手动编辑文件
             </div>
-            <div class="card-body">
-                <div class="devices-list" id="authList">
-                    <!-- 授权列表将通过JavaScript动态加载 -->
-                </div>
+        </div>
+        
+        <div class="card devices-card">
+            <h2><span>📋</span> 已授权设备列表 <span class="badge badge-info" id="deviceCountBadge">0</span></h2>
+            <div id="deviceList" class="loading">
+                <div class="spinner"></div>
+                <p>正在加载设备列表...</p>
             </div>
         </div>
     </div>
-
-    <!-- 添加设备模态框 -->
-    <div id="addDeviceModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">添加设备</h2>
-                <button class="modal-close" onclick="closeAddDeviceModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">设备ID</label>
-                    <input type="text" class="form-control" id="newDeviceId" placeholder="输入设备ID">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">设备名称</label>
-                    <input type="text" class="form-control" id="newDeviceName" placeholder="输入设备名称">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">设备类型</label>
-                    <select class="form-control" id="newDeviceType">
-                        <option value="desktop">台式机</option>
-                        <option value="laptop">笔记本电脑</option>
-                        <option value="tablet">平板电脑</option>
-                        <option value="mobile">移动设备</option>
-                        <option value="server">服务器</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">授权类型</label>
-                    <select class="form-control" id="newAuthType">
-                        <option value="trial">试用版</option>
-                        <option value="standard" selected>标准版</option>
-                        <option value="professional">专业版</option>
-                        <option value="enterprise">企业版</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">有效期（天）</label>
-                    <input type="number" class="form-control" id="newExpiryDays" value="30" min="1" max="3650">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeAddDeviceModal()">取消</button>
-                <button class="btn btn-primary" onclick="addDevice()">确认添加</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 底部导航 -->
-    <nav class="bottom-nav">
-        <a href="#" class="nav-item active">
-            <i class="fas fa-tachometer-alt nav-icon"></i>
-            <span>仪表盘</span>
-        </a>
-        <a href="#" class="nav-item">
-            <i class="fas fa-laptop nav-icon"></i>
-            <span>设备</span>
-        </a>
-        <a href="#" class="nav-item">
-            <i class="fas fa-key nav-icon"></i>
-            <span>授权</span>
-        </a>
-        <a href="#" class="nav-item">
-            <i class="fas fa-cog nav-icon"></i>
-            <span>设置</span>
-        </a>
-    </nav>
 
     <script>
-        // 设备数据
-        let devices = [
-            {
-                id: 1,
-                deviceId: "DEV-001",
-                name: "办公室电脑-01",
-                type: "desktop",
-                registerDate: "2023-05-10",
-                authStatus: "active",
-                authCode: "AK-7X9B-2C8D-4E6F",
-                expiryDate: "2023-11-10"
-            },
-            {
-                id: 2,
-                deviceId: "DEV-002",
-                name: "会议室平板",
-                type: "tablet",
-                registerDate: "2023-05-12",
-                authStatus: "active",
-                authCode: "AK-5A3B-7C8D-9E0F",
-                expiryDate: "2023-11-12"
-            },
-            {
-                id: 3,
-                deviceId: "DEV-003",
-                name: "研发服务器",
-                type: "server",
-                registerDate: "2023-05-15",
-                authStatus: "pending",
-                authCode: "",
-                expiryDate: ""
-            },
-            {
-                id: 4,
-                deviceId: "DEV-004",
-                name: "测试手机",
-                type: "mobile",
-                registerDate: "2023-05-18",
-                authStatus: "inactive",
-                authCode: "",
-                expiryDate: ""
-            },
-            {
-                id: 5,
-                deviceId: "DEV-005",
-                name: "财务专用机",
-                type: "desktop",
-                registerDate: "2023-05-20",
-                authStatus: "active",
-                authCode: "AK-3F5G-7H8J-9K0L",
-                expiryDate: "2023-11-20"
-            }
-        ];
-
-        // 授权数据
-        let authCodes = [
-            {
-                id: 1,
-                code: "AK-7X9B-2C8D-4E6F",
-                generateDate: "2023-05-10",
-                expiryDate: "2023-11-10",
-                deviceId: "DEV-001",
-                status: "active"
-            },
-            {
-                id: 2,
-                code: "AK-5A3B-7C8D-9E0F",
-                generateDate: "2023-05-12",
-                expiryDate: "2023-11-12",
-                deviceId: "DEV-002",
-                status: "active"
-            },
-            {
-                id: 3,
-                code: "AK-1A2B-3C4D-5E6F",
-                generateDate: "2023-05-15",
-                expiryDate: "2023-08-15",
-                deviceId: "",
-                status: "pending"
-            },
-            {
-                id: 4,
-                code: "AK-9Z8Y-7X6W-5V4U",
-                generateDate: "2023-04-01",
-                expiryDate: "2023-07-01",
-                deviceId: "DEV-009",
-                status: "inactive"
-            }
-        ];
-
-        // 初始化
+        // 🔧 配置区：替换为你的GitHub用户名
+        const GITHUB_USERNAME = 'YOUR_GITHUB_USERNAME';
+        const AUTH_URL = `https://cdn.jsdelivr.net/gh/${GITHUB_USERNAME}/tv-auth-system/auth-list.json`;
+        
+        let autoRefreshInterval;
+        
+        // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
-            renderDevices();
-            renderAuthCodes();
-            updateStats();
+            loadDevices();
+            setupAutoRefresh();
             
-            // 底部导航点击效果
-            const navItems = document.querySelectorAll('.nav-item');
-            navItems.forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    navItems.forEach(i => i.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // 在实际应用中，这里应该加载对应的页面内容
-                    showToast(`切换到: ${this.querySelector('span').textContent}`);
-                });
+            // 监听自动刷新开关
+            document.getElementById('autoRefresh').addEventListener('change', function() {
+                if (this.checked) {
+                    setupAutoRefresh();
+                } else {
+                    clearInterval(autoRefreshInterval);
+                }
+            });
+            
+            // 输入框回车添加设备
+            document.getElementById('newDeviceId').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addDevice();
+                }
             });
         });
-
-        // 渲染设备列表
-        function renderDevices() {
-            const devicesList = document.getElementById('devicesList');
+        
+        // 设置自动刷新
+        function setupAutoRefresh() {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(loadDevices, 30000); // 每30秒刷新
+        }
+        
+        // 加载设备列表
+        async function loadDevices() {
+            try {
+                document.getElementById('deviceList').innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>正在加载设备列表...</p>
+                    </div>
+                `;
+                
+                const response = await fetch(AUTH_URL + '?t=' + Date.now());
+                if (!response.ok) {
+                    throw new Error('网络请求失败: ' + response.status);
+                }
+                const data = await response.json();
+                
+                displayDevices(data.authorized_devices);
+                updateStats(data);
+                
+            } catch (error) {
+                document.getElementById('deviceList').innerHTML = 
+                    `<div class="error">
+                        <strong>加载失败:</strong> ${error.message}
+                        <br><br>
+                        <button class="btn btn-warning" onclick="loadDevices()">重试</button>
+                    </div>`;
+                console.error('加载错误:', error);
+                
+                // 更新系统状态为异常
+                document.getElementById('systemStatus').textContent = '异常';
+                document.getElementById('systemStatus').style.color = 'var(--danger)';
+            }
+        }
+        
+        // 显示设备列表
+        function displayDevices(devices) {
+            const deviceList = document.getElementById('deviceList');
             
             if (devices.length === 0) {
-                devicesList.innerHTML = `
+                deviceList.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-icon">
-                            <i class="fas fa-laptop"></i>
-                        </div>
-                        <div class="empty-text">暂无设备数据</div>
-                        <button class="btn btn-primary" onclick="showAddDeviceModal()">
-                            <i class="fas fa-plus"></i> 添加第一个设备
-                        </button>
+                        <div class="empty-state-icon">📺</div>
+                        <h3>暂无授权设备</h3>
+                        <p>点击上方"添加授权"按钮添加第一个设备</p>
                     </div>
                 `;
                 return;
             }
             
-            devicesList.innerHTML = '';
-            
-            devices.forEach(device => {
-                let statusClass = 'status-active';
-                let statusText = '已授权';
-                let cardClass = '';
-                
-                if (device.authStatus === 'inactive') {
-                    statusClass = 'status-inactive';
-                    statusText = '未授权';
-                } else if (device.authStatus === 'pending') {
-                    statusClass = 'status-pending';
-                    statusText = '待授权';
-                    cardClass = 'pending';
-                }
-                
-                const card = document.createElement('div');
-                card.className = `device-card ${cardClass}`;
-                card.innerHTML = `
-                    <div class="device-header">
-                        <div class="device-id">${device.deviceId}</div>
-                        <div class="device-status ${statusClass}">${statusText}</div>
-                    </div>
-                    <div class="device-details">
-                        <div class="device-detail">
-                            <div class="detail-label">设备名称</div>
-                            <div class="detail-value">${device.name}</div>
-                        </div>
-                        <div class="device-detail">
-                            <div class="detail-label">设备类型</div>
-                            <div class="detail-value">${getDeviceTypeText(device.type)}</div>
-                        </div>
-                        <div class="device-detail">
-                            <div class="detail-label">注册时间</div>
-                            <div class="detail-value">${device.registerDate}</div>
-                        </div>
-                        <div class="device-detail">
-                            <div class="detail-label">到期时间</div>
-                            <div class="detail-value">${device.expiryDate || '-'}</div>
-                        </div>
-                    </div>
+            deviceList.innerHTML = devices.map(device => `
+                <div class="device-item">
+                    <div class="device-id" title="${device}">${device}</div>
                     <div class="device-actions">
-                        <button class="btn btn-primary" onclick="viewDevice(${device.id})">
-                            <i class="fas fa-eye"></i> 查看
+                        <button class="btn btn-primary" onclick="copyDeviceId('${device}')">
+                            <span>📋</span> 复制
                         </button>
-                        ${device.authStatus === 'active' ? 
-                            `<button class="btn btn-danger" onclick="revokeAuth(${device.id})">
-                                <i class="fas fa-ban"></i> 撤销
-                            </button>` : 
-                            `<button class="btn btn-success" onclick="grantAuth(${device.id})">
-                                <i class="fas fa-key"></i> 授权
-                            </button>`
-                        }
+                        <button class="btn btn-danger" onclick="removeDevice('${device}')">
+                            <span>🗑️</span> 删除
+                        </button>
                     </div>
-                `;
-                devicesList.appendChild(card);
-            });
+                </div>
+            `).join('');
         }
-
-        // 渲染授权列表
-        function renderAuthCodes() {
-            const authList = document.getElementById('authList');
-            
-            if (authCodes.length === 0) {
-                authList.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">
-                            <i class="fas fa-key"></i>
-                        </div>
-                        <div class="empty-text">暂无授权码</div>
-                        <button class="btn btn-primary" onclick="generateAuthCode()">
-                            <i class="fas fa-plus"></i> 生成第一个授权码
-                        </button>
-                    </div>
-                `;
-                return;
-            }
-            
-            authList.innerHTML = '';
-            
-            authCodes.forEach(auth => {
-                let statusClass = 'status-active';
-                let statusText = '有效';
-                let cardClass = '';
-                
-                if (auth.status === 'inactive') {
-                    statusClass = 'status-inactive';
-                    statusText = '已过期';
-                    cardClass = 'expired';
-                } else if (auth.status === 'pending') {
-                    statusClass = 'status-pending';
-                    statusText = '未使用';
-                    cardClass = 'pending';
-                }
-                
-                const card = document.createElement('div');
-                card.className = `device-card ${cardClass}`;
-                card.innerHTML = `
-                    <div class="device-header">
-                        <div class="device-id">${auth.code}</div>
-                        <div class="device-status ${statusClass}">${statusText}</div>
-                    </div>
-                    <div class="device-details">
-                        <div class="device-detail">
-                            <div class="detail-label">生成时间</div>
-                            <div class="detail-value">${auth.generateDate}</div>
-                        </div>
-                        <div class="device-detail">
-                            <div class="detail-label">有效期</div>
-                            <div class="detail-value">${auth.expiryDate}</div>
-                        </div>
-                        <div class="device-detail">
-                            <div class="detail-label">绑定设备</div>
-                            <div class="detail-value">${auth.deviceId || '-'}</div>
-                        </div>
-                    </div>
-                    <div class="device-actions">
-                        <button class="btn btn-primary" onclick="viewAuthDetails(${auth.id})">
-                            <i class="fas fa-info-circle"></i> 详情
-                        </button>
-                        ${auth.status === 'active' ? 
-                            `<button class="btn btn-danger" onclick="disableAuth(${auth.id})">
-                                <i class="fas fa-ban"></i> 禁用
-                            </button>` : 
-                            `<button class="btn btn-danger" onclick="deleteAuth(${auth.id})">
-                                <i class="fas fa-trash"></i> 删除
-                            </button>`
-                        }
-                    </div>
-                `;
-                authList.appendChild(card);
-            });
-        }
-
+        
         // 更新统计信息
-        function updateStats() {
-            const total = devices.length;
-            const authorized = devices.filter(device => device.authStatus === 'active').length;
-            const pending = devices.filter(device => device.authStatus === 'pending').length;
-            const expired = authCodes.filter(auth => auth.status === 'inactive').length;
-            
-            document.getElementById('totalDevices').textContent = total;
-            document.getElementById('authorizedDevices').textContent = authorized;
-            document.getElementById('pendingDevices').textContent = pending;
-            document.getElementById('expiredDevices').textContent = expired;
+        function updateStats(data) {
+            document.getElementById('deviceCount').textContent = data.authorized_devices.length;
+            document.getElementById('deviceCountBadge').textContent = data.authorized_devices.length;
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+            document.getElementById('systemStatus').textContent = '正常';
+            document.getElementById('systemStatus').style.color = 'var(--success)';
         }
-
-        // 获取设备类型文本
-        function getDeviceTypeText(type) {
-            const typeMap = {
-                'desktop': '台式机',
-                'laptop': '笔记本电脑',
-                'tablet': '平板电脑',
-                'mobile': '移动设备',
-                'server': '服务器'
-            };
-            return typeMap[type] || type;
-        }
-
-        // 搜索设备
-        function searchDevices() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-            
-            if (!searchTerm) {
-                renderDevices();
-                return;
-            }
-            
-            const filteredDevices = devices.filter(device => 
-                device.deviceId.toLowerCase().includes(searchTerm) ||
-                device.name.toLowerCase().includes(searchTerm)
-            );
-            
-            const devicesList = document.getElementById('devicesList');
-            devicesList.innerHTML = '';
-            
-            if (filteredDevices.length === 0) {
-                devicesList.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">
-                            <i class="fas fa-search"></i>
-                        </div>
-                        <div class="empty-text">未找到匹配的设备</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            filteredDevices.forEach(device => {
-                let statusClass = 'status-active';
-                let statusText = '已授权';
-                let cardClass = '';
-                
-                if (device.authStatus === 'inactive') {
-                    statusClass = 'status-inactive';
-                    statusText = '未授权';
-                } else if (device.authStatus === 'pending') {
-                    statusClass = 'status-pending';
-                    statusText = '待授权';
-                    cardClass = 'pending';
-                }
-                
-                const card = document.createElement('div');
-                card.className = `device-card ${cardClass}`;
-                card.innerHTML = `
-                    <div class="device-header">
-                        <div class="device-id">${device.deviceId}</div>
-                        <div class="device-status ${statusClass}">${statusText}</div>
-                    </div>
-                    <div class="device-details">
-                        <div class="device-detail">
-                            <div class="detail-label">设备名称</div>
-                            <div class="detail-value">${device.name}</div>
-                        </div>
-                        <div class="device-detail">
-                            <div class="detail-label">设备类型</div>
-                            <div class="detail-value">${getDeviceTypeText(device.type)}</div>
-                        </div>
-                        <div class="device-detail">
-                            <div class="detail-label">注册时间</div>
-                            <div class="detail-value">${device.registerDate}</div>
-                        </div>
-                        <div class="device-detail">
-                            <div class="detail-label">到期时间</div>
-                            <div class="detail-value">${device.expiryDate || '-'}</div>
-                        </div>
-                    </div>
-                    <div class="device-actions">
-                        <button class="btn btn-primary" onclick="viewDevice(${device.id})">
-                            <i class="fas fa-eye"></i> 查看
-                        </button>
-                        ${device.authStatus === 'active' ? 
-                            `<button class="btn btn-danger" onclick="revokeAuth(${device.id})">
-                                <i class="fas fa-ban"></i> 撤销
-                            </button>` : 
-                            `<button class="btn btn-success" onclick="grantAuth(${device.id})">
-                                <i class="fas fa-key"></i> 授权
-                            </button>`
-                        }
-                    </div>
-                `;
-                devicesList.appendChild(card);
-            });
-        }
-
-        // 显示添加设备模态框
-        function showAddDeviceModal() {
-            document.getElementById('addDeviceModal').style.display = 'flex';
-        }
-
-        // 关闭添加设备模态框
-        function closeAddDeviceModal() {
-            document.getElementById('addDeviceModal').style.display = 'none';
-        }
-
+        
         // 添加设备
         function addDevice() {
             const deviceId = document.getElementById('newDeviceId').value.trim();
-            const deviceName = document.getElementById('newDeviceName').value.trim();
-            const deviceType = document.getElementById('newDeviceType').value;
-            const authType = document.getElementById('newAuthType').value;
-            const expiryDays = parseInt(document.getElementById('newExpiryDays').value) || 30;
-            
-            if (!deviceId || !deviceName) {
-                showToast('请填写完整信息');
+            if (!deviceId) {
+                showMessage('请输入设备ID', 'error');
+                document.getElementById('newDeviceId').focus();
                 return;
             }
             
-            // 检查设备ID是否已存在
-            if (devices.some(device => device.deviceId === deviceId)) {
-                showToast('设备ID已存在');
+            if (!validateDeviceId(deviceId)) {
+                showMessage('设备ID格式不正确！<br>正确格式：TV_时间戳_随机字符<br>示例：TV_1700000000000_abc123def', 'error');
+                document.getElementById('newDeviceId').focus();
                 return;
             }
             
-            // 计算到期日期
-            const today = new Date();
-            today.setDate(today.getDate() + expiryDays);
-            const expiryDate = today.toISOString().split('T')[0];
+            const editUrl = `https://github.com/${GITHUB_USERNAME}/tv-auth-system/edit/main/auth-list.json`;
             
-            // 添加新设备
-            const newDevice = {
-                id: Date.now(),
-                deviceId: deviceId,
-                name: deviceName,
-                type: deviceType,
-                registerDate: new Date().toISOString().split('T')[0],
-                authStatus: 'active',
-                authCode: generateRandomAuthCode(),
-                expiryDate: expiryDate
-            };
+            const message = `请手动添加设备授权：\n\n1. 点击确定后打开GitHub编辑页面\n2. 在 "authorized_devices" 数组中添加: "${deviceId}"\n3. 滚动到底部，点击 "Commit changes" 提交\n\n设备ID: ${deviceId}`;
             
-            devices.unshift(newDevice);
-            
-            // 添加对应的授权码
-            const newAuth = {
-                id: Date.now() + 1,
-                code: newDevice.authCode,
-                generateDate: new Date().toISOString().split('T')[0],
-                expiryDate: expiryDate,
-                deviceId: deviceId,
-                status: 'active'
-            };
-            
-            authCodes.unshift(newAuth);
-            
-            renderDevices();
-            renderAuthCodes();
-            updateStats();
-            closeAddDeviceModal();
-            
-            showToast(`设备 ${deviceId} 添加成功`);
-        }
-
-        // 生成随机授权码
-        function generateRandomAuthCode() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let result = 'AK-';
-            for (let i = 0; i < 11; i++) {
-                if (i > 0 && i % 4 === 0) result += '-';
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            if (confirm(message)) {
+                window.open(editUrl, '_blank');
+                showMessage(`设备ID "${deviceId}" 已准备添加，请在GitHub页面完成操作`, 'success');
             }
-            return result;
+            
+            // 清空输入框
+            document.getElementById('newDeviceId').value = '';
         }
-
-        // 生成授权码
-        function generateAuthCode() {
-            const newAuth = {
-                id: Date.now(),
-                code: generateRandomAuthCode(),
-                generateDate: new Date().toISOString().split('T')[0],
-                expiryDate: '',
-                deviceId: '',
-                status: 'pending'
-            };
-            
-            authCodes.unshift(newAuth);
-            renderAuthCodes();
-            
-            showToast('授权码生成成功');
-        }
-
-        // 查看设备详情
-        function viewDevice(deviceId) {
-            const device = devices.find(d => d.id === deviceId);
-            if (!device) return;
-            
-            const infoText = `设备详细信息：
-设备ID: ${device.deviceId}
-设备名称: ${device.name}
-设备类型: ${getDeviceTypeText(device.type)}
-注册时间: ${device.registerDate}
-授权状态: ${device.authStatus === 'active' ? '已授权' : device.authStatus === 'pending' ? '待授权' : '未授权'}
-授权码: ${device.authCode || '无'}
-到期时间: ${device.expiryDate || '无'}`;
-            
-            alert(infoText);
-        }
-
-        // 查看授权详情
-        function viewAuthDetails(authId) {
-            const auth = authCodes.find(a => a.id === authId);
-            if (!auth) return;
-            
-            const infoText = `授权码详细信息：
-授权码: ${auth.code}
-生成时间: ${auth.generateDate}
-有效期: ${auth.expiryDate || '无'}
-绑定设备: ${auth.deviceId || '无'}
-状态: ${auth.status === 'active' ? '有效' : auth.status === 'pending' ? '未使用' : '已过期'}`;
-            
-            alert(infoText);
-        }
-
-        // 授权设备
-        function grantAuth(deviceId) {
-            const device = devices.find(d => d.id === deviceId);
-            if (!device) return;
-            
-            // 查找可用的授权码
-            const availableAuth = authCodes.find(a => a.status === 'pending' && !a.deviceId);
-            
-            if (!availableAuth) {
-                showToast('没有可用的授权码，请先生成授权码');
+        
+        // 删除设备
+        function removeDevice(deviceId) {
+            if (!confirm(`确定要删除设备授权吗？\n\n设备ID: ${deviceId}`)) {
                 return;
             }
             
-            // 计算到期日期（30天后）
-            const today = new Date();
-            today.setDate(today.getDate() + 30);
-            const expiryDate = today.toISOString().split('T')[0];
+            const editUrl = `https://github.com/${GITHUB_USERNAME}/tv-auth-system/edit/main/auth-list.json`;
+            const message = `请手动删除设备授权：\n\n1. 点击确定后打开GitHub编辑页面\n2. 从 "authorized_devices" 数组中删除: "${deviceId}"\n3. 滚动到底部，点击 "Commit changes" 提交`;
             
-            // 更新设备状态
-            device.authStatus = 'active';
-            device.authCode = availableAuth.code;
-            device.expiryDate = expiryDate;
-            
-            // 更新授权码状态
-            availableAuth.deviceId = device.deviceId;
-            availableAuth.expiryDate = expiryDate;
-            availableAuth.status = 'active';
-            
-            renderDevices();
-            renderAuthCodes();
-            updateStats();
-            
-            showToast(`设备 ${device.deviceId} 授权成功`);
+            alert(message);
+            window.open(editUrl, '_blank');
+            showMessage(`设备ID "${deviceId}" 已标记删除，请在GitHub页面完成操作`, 'success');
         }
-
-        // 撤销授权
-        function revokeAuth(deviceId) {
-            const device = devices.find(d => d.id === deviceId);
-            if (!device) return;
-            
-            if (!confirm(`确定要撤销设备 ${device.deviceId} 的授权吗？`)) {
-                return;
-            }
-            
-            // 更新设备状态
-            device.authStatus = 'inactive';
-            device.authCode = '';
-            device.expiryDate = '';
-            
-            // 更新授权码状态
-            const auth = authCodes.find(a => a.code === device.authCode);
-            if (auth) {
-                auth.deviceId = '';
-                auth.status = 'inactive';
-            }
-            
-            renderDevices();
-            renderAuthCodes();
-            updateStats();
-            
-            showToast(`设备 ${device.deviceId} 授权已撤销`);
+        
+        // 生成设备ID
+        function generateDeviceId() {
+            const deviceId = 'TV_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+            document.getElementById('newDeviceId').value = deviceId;
+            document.getElementById('newDeviceId').select();
+            showMessage('已生成新的设备ID', 'success');
         }
-
-        // 禁用授权码
-        function disableAuth(authId) {
-            const auth = authCodes.find(a => a.id === authId);
-            if (!auth) return;
-            
-            if (!confirm(`确定要禁用授权码 ${auth.code} 吗？`)) {
-                return;
-            }
-            
-            auth.status = 'inactive';
-            
-            // 如果授权码已绑定设备，同时撤销设备授权
-            if (auth.deviceId) {
-                const device = devices.find(d => d.deviceId === auth.deviceId);
-                if (device) {
-                    device.authStatus = 'inactive';
-                    device.authCode = '';
-                    device.expiryDate = '';
-                }
-            }
-            
-            renderDevices();
-            renderAuthCodes();
-            updateStats();
-            
-            showToast(`授权码 ${auth.code} 已禁用`);
+        
+        // 复制设备ID
+        function copyDeviceId(deviceId) {
+            navigator.clipboard.writeText(deviceId).then(() => {
+                showMessage('已复制设备ID: ' + deviceId, 'success');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                // 降级方案
+                const textArea = document.createElement('textarea');
+                textArea.value = deviceId;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showMessage('已复制设备ID: ' + deviceId, 'success');
+            });
         }
-
-        // 删除授权码
-        function deleteAuth(authId) {
-            const auth = authCodes.find(a => a.id === authId);
-            if (!auth) return;
-            
-            if (!confirm(`确定要删除授权码 ${auth.code} 吗？`)) {
-                return;
+        
+        // 验证设备ID格式
+        function validateDeviceId(deviceId) {
+            const pattern = /^TV_\d+_[a-zA-Z0-9]{8,}$/;
+            return pattern.test(deviceId);
+        }
+        
+        // 显示消息
+        function showMessage(message, type) {
+            // 移除现有消息
+            const existingMessage = document.querySelector('.message-toast');
+            if (existingMessage) {
+                existingMessage.remove();
             }
             
-            authCodes = authCodes.filter(a => a.id !== authId);
-            renderAuthCodes();
+            // 创建新消息
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `alert ${type === 'error' ? 'error' : 'success'} message-toast`;
+            messageDiv.innerHTML = message;
+            messageDiv.style.position = 'fixed';
+            messageDiv.style.top = '20px';
+            messageDiv.style.right = '20px';
+            messageDiv.style.zIndex = '1000';
+            messageDiv.style.maxWidth = '400px';
+            messageDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
             
-            showToast(`授权码 ${auth.code} 已删除`);
-        }
-
-        // 显示Toast提示
-        function showToast(message) {
-            // 创建Toast元素
-            const toast = document.createElement('div');
-            toast.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: var(--dark);
-                color: white;
-                padding: 12px 20px;
-                border-radius: 10px;
-                z-index: 10000;
-                font-size: 14px;
-                text-align: center;
-                max-width: 80%;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                animation: toastAppear 0.3s ease;
-            `;
+            document.body.appendChild(messageDiv);
             
-            // 添加动画
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes toastAppear {
-                    from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-                    to { opacity: 1; transform: translateX(-50%) translateY(0); }
-                }
-            `;
-            document.head.appendChild(style);
-            
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            
+            // 3秒后自动消失
             setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.remove();
-                }
-                if (style.parentNode) {
-                    style.remove();
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
                 }
             }, 3000);
-        }
-
-        // 点击模态框外部关闭
-        window.onclick = function(event) {
-            const modal = document.getElementById('addDeviceModal');
-            if (event.target === modal) {
-                closeAddDeviceModal();
-            }
         }
     </script>
 </body>
