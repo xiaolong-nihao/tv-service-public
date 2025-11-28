@@ -4,275 +4,399 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>设备授权管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #4361ee;
+            --primary-light: #4895ef;
             --secondary: #3a0ca3;
             --success: #4cc9f0;
             --danger: #f72585;
             --warning: #f8961e;
+            --info: #7209b7;
             --light: #f8f9fa;
             --dark: #212529;
+            --gray: #6c757d;
+            --bg-color: #f5f7fb;
+            --card-bg: #ffffff;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 12px;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        
+
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 10px;
+            background: var(--bg-color);
+            color: var(--text-primary);
             font-size: 14px;
+            line-height: 1.5;
+            min-height: 100vh;
+            padding: 0;
         }
-        
-        .container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            width: 100%;
+
+        .app-container {
             max-width: 100%;
             margin: 0 auto;
-            overflow: hidden;
+            padding: 15px;
         }
-        
-        .header {
+
+        /* 头部样式 */
+        .app-header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
-            padding: 15px;
-            text-align: center;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
         }
-        
-        .header h1 {
-            font-size: 18px;
-            margin-bottom: 4px;
-            font-weight: 600;
+
+        .app-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
         }
-        
-        .header p {
-            font-size: 12px;
+
+        .app-header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-header p {
+            font-size: 14px;
             opacity: 0.9;
         }
-        
-        .main-content {
-            padding: 15px;
-        }
-        
-        .stats-grid {
+
+        /* 统计卡片 */
+        .stats-container {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 15px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:active {
+            transform: scale(0.98);
+        }
+
+        .stat-card.total {
+            border-top: 4px solid var(--primary);
+        }
+
+        .stat-card.active {
+            border-top: 4px solid var(--success);
+        }
+
+        .stat-card.expired {
+            border-top: 4px solid var(--danger);
+        }
+
+        .stat-card.warning {
+            border-top: 4px solid var(--warning);
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .stat-card.total .stat-icon {
+            background: rgba(67, 97, 238, 0.15);
+            color: var(--primary);
+        }
+
+        .stat-card.active .stat-icon {
+            background: rgba(76, 201, 240, 0.15);
+            color: var(--success);
+        }
+
+        .stat-card.expired .stat-icon {
+            background: rgba(247, 37, 133, 0.15);
+            color: var(--danger);
+        }
+
+        .stat-card.warning .stat-icon {
+            background: rgba(248, 150, 30, 0.15);
+            color: var(--warning);
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* 控制面板 */
+        .control-panel {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-box {
+            display: flex;
             gap: 10px;
             margin-bottom: 15px;
         }
-        
-        .stat-card {
-            background: white;
+
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1.5px solid var(--border-color);
             border-radius: 10px;
-            padding: 12px;
-            text-align: center;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-            border-left: 4px solid var(--primary);
-        }
-        
-        .stat-card.total { border-left-color: var(--primary); }
-        .stat-card.active { border-left-color: var(--success); }
-        .stat-card.expired { border-left-color: var(--danger); }
-        .stat-card.warning { border-left-color: var(--warning); }
-        
-        .stat-number {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-        
-        .stat-label {
-            color: #666;
-            font-size: 11px;
-        }
-        
-        .section {
-            margin-bottom: 20px;
-        }
-        
-        .section-title {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--dark);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .form-group {
-            margin-bottom: 12px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #444;
-            font-size: 13px;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1.5px solid #e1e5e9;
-            border-radius: 8px;
             font-size: 14px;
+            background: var(--light);
             transition: all 0.3s;
-            background: #fff;
         }
-        
-        .form-control:focus {
+
+        .search-input:focus {
             border-color: var(--primary);
             outline: none;
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
         }
-        
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        /* 按钮样式 */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            padding: 10px 14px;
+            gap: 8px;
+            padding: 12px 16px;
             border: none;
-            border-radius: 8px;
-            font-size: 13px;
+            border-radius: 10px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            margin: 4px;
+            text-decoration: none;
             min-height: 44px;
             touch-action: manipulation;
         }
-        
+
+        .btn-block {
+            width: 100%;
+        }
+
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: white;
         }
-        
+
         .btn-success {
             background: var(--success);
             color: white;
         }
-        
+
         .btn-danger {
             background: var(--danger);
             color: white;
         }
-        
+
         .btn-warning {
             background: var(--warning);
             color: white;
         }
-        
-        .btn-sm {
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+        }
+
+        /* 设备列表 */
+        .devices-section {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .devices-count {
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .devices-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .device-card {
+            background: var(--light);
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s;
+        }
+
+        .device-card:active {
+            transform: scale(0.99);
+        }
+
+        .device-card.expired {
+            border-left-color: var(--danger);
+            opacity: 0.8;
+        }
+
+        .device-card.warning {
+            border-left-color: var(--warning);
+        }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .device-id {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        .device-status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: rgba(76, 201, 240, 0.15);
+            color: var(--success);
+        }
+
+        .status-expired {
+            background: rgba(247, 37, 133, 0.15);
+            color: var(--danger);
+        }
+
+        .status-warning {
+            background: rgba(248, 150, 30, 0.15);
+            color: var(--warning);
+        }
+
+        .device-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .device-detail {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .device-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .device-actions .btn {
+            flex: 1;
             padding: 8px 12px;
             font-size: 12px;
             min-height: 36px;
         }
-        
-        .device-table {
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            margin-top: 12px;
-        }
-        
-        .table-header {
-            background: var(--light);
-            padding: 10px;
-            display: none; /* 移动端隐藏表头 */
-            font-weight: 600;
-            border-bottom: 1px solid #eee;
-            font-size: 12px;
-        }
-        
-        .table-row {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            transition: background 0.3s;
-            font-size: 13px;
-        }
-        
-        .device-card {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 8px;
-        }
-        
-        .device-info {
-            margin-bottom: 10px;
-        }
-        
-        .device-id {
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--dark);
-            margin-bottom: 4px;
-        }
-        
-        .device-meta {
-            font-size: 12px;
-            color: #666;
-            line-height: 1.4;
-        }
-        
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: 600;
-            display: inline-block;
-            margin-top: 4px;
-        }
-        
-        .status-active {
-            background: #e7f7ef;
-            color: #10b981;
-        }
-        
-        .status-expired {
-            background: #fef2f2;
-            color: #ef4444;
-        }
-        
-        .status-warning {
-            background: #fffbeb;
-            color: #f59e0b;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-        
-        .search-box {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-        
-        .search-input {
-            flex: 1;
-            padding: 10px 12px;
-            border: 1.5px solid #e1e5e9;
-            border-radius: 8px;
-            font-size: 14px;
-            background: #fff;
-        }
-        
+
+        /* 模态框 */
         .modal {
             display: none;
             position: fixed;
@@ -280,409 +404,309 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             justify-content: center;
             align-items: center;
             z-index: 1000;
             padding: 15px;
+            backdrop-filter: blur(5px);
         }
-        
+
         .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
             width: 100%;
-            max-width: 100%;
+            max-width: 500px;
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            animation: modalAppear 0.3s ease;
         }
-        
-        .modal-actions {
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px 20px 10px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 10px 20px 20px;
             display: flex;
             gap: 10px;
             justify-content: flex-end;
-            margin-top: 20px;
-            flex-wrap: wrap;
         }
-        
-        .modal-actions .btn {
-            flex: 1;
-            min-width: 80px;
-        }
-        
-        .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--dark);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            z-index: 10000;
-            font-size: 14px;
-            text-align: center;
-            max-width: 90%;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
-        .control-panel {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
+
+        /* 表单元素 */
+        .form-group {
             margin-bottom: 15px;
         }
-        
-        .control-card {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-        }
-        
-        .device-id-input {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-        
-        .device-id-input input {
-            flex: 1;
-        }
-        
-        .device-details {
-            margin-top: 10px;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            font-size: 13px;
-        }
-        
-        .device-details .row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            padding: 4px 0;
-        }
-        
-        .device-details .label {
-            color: #666;
-            font-weight: 500;
-            min-width: 80px;
-        }
-        
-        .device-details .value {
-            color: #333;
-            text-align: right;
-            flex: 1;
-            word-break: break-all;
-        }
-        
-        .delete-confirm {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 15px;
-            text-align: center;
-        }
-        
-        .url-info {
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 8px;
-            padding: 12px;
-            margin-top: 12px;
-        }
-        
-        .url-info h4 {
-            color: var(--primary);
+
+        .form-label {
+            display: block;
             margin-bottom: 8px;
-            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
         }
-        
-        .url-item {
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            background: var(--light);
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* 底部导航 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            display: flex;
+            padding: 10px 15px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .nav-item {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            margin-bottom: 8px;
-            padding: 8px;
-            background: white;
-            border-radius: 6px;
+            align-items: center;
+            padding: 8px 5px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 11px;
+            transition: all 0.3s;
         }
-        
-        .url-type {
-            font-weight: 600;
-            color: #555;
-            font-size: 12px;
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 20px;
             margin-bottom: 4px;
         }
-        
-        .url-value {
-            color: #333;
-            word-break: break-all;
-            font-size: 12px;
-            line-height: 1.4;
-        }
-        
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            margin-top: 10px;
-        }
-        
+
+        /* 空状态 */
         .empty-state {
             text-align: center;
             padding: 40px 20px;
-            color: #666;
+            color: var(--text-secondary);
         }
-        
-        .empty-state i {
-            font-size: 48px;
-            margin-bottom: 10px;
+
+        .empty-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
             opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 16px;
+            margin-bottom: 20px;
         }
 
         /* 响应式设计 */
         @media (min-width: 768px) {
-            body {
+            .app-container {
+                max-width: 750px;
                 padding: 20px;
             }
             
-            .container {
-                max-width: 800px;
-            }
-            
-            .stats-grid {
+            .stats-container {
                 grid-template-columns: repeat(4, 1fr);
-                gap: 15px;
             }
             
-            .table-header {
-                display: grid;
-                grid-template-columns: 2fr 2fr 1fr;
+            .quick-actions {
+                grid-template-columns: repeat(4, 1fr);
             }
             
-            .device-card {
-                display: none;
-            }
-            
-            .table-row {
-                display: grid;
-                grid-template-columns: 2fr 2fr 1fr;
-                gap: 10px;
-                align-items: center;
-            }
-            
-            .control-panel {
-                grid-template-columns: 1fr 1fr;
-            }
-            
-            .modal-content {
-                max-width: 500px;
-            }
-            
-            .url-item {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-            }
-            
-            .url-type {
-                margin-bottom: 0;
-                min-width: 80px;
+            .device-details {
+                grid-template-columns: repeat(4, 1fr);
             }
         }
 
-        /* 移动端特定样式 */
-        @media (max-width: 767px) {
-            .table-row {
-                display: none;
+        /* 暗色模式支持 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1a202c;
+                --card-bg: #2d3748;
+                --text-primary: #f7fafc;
+                --text-secondary: #cbd5e0;
+                --border-color: #4a5568;
+                --light: #4a5568;
             }
-            
-            .main-content {
-                padding: 12px;
-            }
-            
-            .header {
-                padding: 12px;
-            }
-            
-            .btn {
-                flex: 1;
-                min-width: 0;
-            }
-            
-            .modal-actions {
-                flex-direction: column;
-            }
-            
-            .action-buttons {
-                justify-content: space-between;
-            }
-            
-            .action-buttons .btn {
-                flex: 1;
-                min-width: 0;
-            }
-        }
-
-        /* 防止iOS缩放 */
-        input, select, textarea {
-            font-size: 16px !important;
-        }
-
-        /* 滚动条优化 */
-        ::-webkit-scrollbar {
-            width: 4px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 2px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>⚙️ 设备授权管理系统</h1>
+    <div class="app-container">
+        <!-- 应用头部 -->
+        <header class="app-header">
+            <h1><i class="fas fa-shield-alt"></i> 设备授权管理系统</h1>
             <p>专业设备授权管理平台</p>
-        </div>
-        
-        <div class="main-content">
-            <!-- 统计面板 -->
-            <div class="stats-grid">
-                <div class="stat-card total">
-                    <div class="stat-number" id="totalDevices">0</div>
-                    <div class="stat-label">总设备</div>
-                </div>
-                <div class="stat-card active">
-                    <div class="stat-number" id="activeDevices">0</div>
-                    <div class="stat-label">有效</div>
-                </div>
-                <div class="stat-card expired">
-                    <div class="stat-number" id="expiredDevices">0</div>
-                    <div class="stat-label">过期</div>
-                </div>
-                <div class="stat-card warning">
-                    <div class="stat-number" id="warningDevices">0</div>
-                    <div class="stat-label">即将到期</div>
-                </div>
-            </div>
+        </header>
 
-            <!-- URL配置信息 -->
-            <div class="section">
-                <div class="section-title">
-                    <span>🌐 服务地址</span>
+        <!-- 统计卡片 -->
+        <div class="stats-container">
+            <div class="stat-card total">
+                <div class="stat-icon">
+                    <i class="fas fa-tv"></i>
                 </div>
-                <div class="url-info">
-                    <h4>当前服务地址</h4>
-                    <div class="url-item">
-                        <span class="url-type">演示地址:</span>
-                        <span class="url-value" id="demoUrl">加载中...</span>
-                    </div>
-                    <div class="url-item">
-                        <span class="url-type">真实地址:</span>
-                        <span class="url-value" id="realUrl">加载中...</span>
-                    </div>
-                    <div class="url-item">
-                        <span class="url-type">默认模式:</span>
-                        <span class="url-value" id="defaultMode">加载中...</span>
-                    </div>
-                    <button class="btn btn-primary btn-sm" onclick="refreshConfig()" style="margin-top: 8px; width: 100%;">
-                        🔄 刷新配置
-                    </button>
-                </div>
+                <div class="stat-number" id="totalDevices">0</div>
+                <div class="stat-label">总设备</div>
             </div>
-
-            <!-- 控制面板 -->
-            <div class="control-panel">
-                <div class="control-card">
-                    <h3 style="margin-bottom: 12px; font-size: 15px;">🔍 设备搜索</h3>
-                    <div class="search-box">
-                        <input type="text" class="search-input" id="searchInput" placeholder="输入设备ID或联系方式...">
-                        <button class="btn btn-primary btn-sm" onclick="searchDevices()">搜索</button>
-                    </div>
-                    <div class="quick-actions">
-                        <button class="btn btn-success" onclick="showAddDeviceModal()">
-                            ➕ 添加
-                        </button>
-                        <button class="btn btn-warning" onclick="refreshData()">
-                            🔄 刷新
-                        </button>
-                        <button class="btn btn-primary" onclick="exportData()">
-                            💾 导出
-                        </button>
-                        <button class="btn btn-danger" onclick="clearExpired()">
-                            🗑️ 清理
-                        </button>
-                    </div>
+            <div class="stat-card active">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
                 </div>
+                <div class="stat-number" id="activeDevices">0</div>
+                <div class="stat-label">有效设备</div>
             </div>
-
-            <!-- 设备管理 -->
-            <div class="section">
-                <div class="section-title">
-                    <span>📋 设备管理</span>
-                    <span style="font-size: 13px; color: #666;">共 <span id="deviceCount">0</span> 个</span>
+            <div class="stat-card expired">
+                <div class="stat-icon">
+                    <i class="fas fa-times-circle"></i>
                 </div>
-                
-                <div class="device-table">
-                    <div class="table-header">
-                        <div>设备信息</div>
-                        <div>联系信息</div>
-                        <div>操作</div>
-                    </div>
-                    <div id="devicesList">
-                        <!-- 设备列表将通过JavaScript动态加载 -->
-                    </div>
+                <div class="stat-number" id="expiredDevices">0</div>
+                <div class="stat-label">已过期</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-circle"></i>
                 </div>
+                <div class="stat-number" id="warningDevices">0</div>
+                <div class="stat-label">即将到期</div>
             </div>
         </div>
+
+        <!-- 控制面板 -->
+        <div class="control-panel">
+            <div class="panel-title">
+                <i class="fas fa-cogs"></i> 控制面板
+            </div>
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="搜索设备ID或联系方式...">
+                <button class="btn btn-primary" onclick="searchDevices()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="quick-actions">
+                <button class="btn btn-success" onclick="showAddDeviceModal()">
+                    <i class="fas fa-plus"></i> 添加设备
+                </button>
+                <button class="btn btn-primary" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i> 刷新数据
+                </button>
+                <button class="btn btn-warning" onclick="exportData()">
+                    <i class="fas fa-download"></i> 导出数据
+                </button>
+                <button class="btn btn-danger" onclick="clearExpired()">
+                    <i class="fas fa-trash"></i> 清理过期
+                </button>
+            </div>
+        </div>
+
+        <!-- 设备列表 -->
+        <section class="devices-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-list"></i> 设备列表
+                </div>
+                <div class="devices-count" id="devicesCount">0</div>
+            </div>
+            <div class="devices-list" id="devicesList">
+                <!-- 设备列表将通过JavaScript动态加载 -->
+            </div>
+        </section>
     </div>
 
     <!-- 添加设备模态框 -->
     <div id="addDeviceModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-bottom: 15px; font-size: 16px;">➕ 添加设备授权</h3>
-            
-            <div class="form-group">
-                <label>设备ID：</label>
-                <div class="device-id-input">
-                    <input type="text" id="newDeviceId" class="form-control" placeholder="输入设备ID">
-                    <button class="btn btn-sm" onclick="pasteDeviceId()" style="background: #e2e8f0;">📋 粘贴</button>
+            <div class="modal-header">
+                <h2 class="modal-title">添加设备授权</h2>
+                <button class="modal-close" onclick="closeAddDeviceModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">设备ID</label>
+                    <div class="form-row">
+                        <input type="text" class="form-control" id="newDeviceId" placeholder="输入设备ID">
+                        <button class="btn btn-outline" onclick="pasteDeviceId()" style="min-width: 80px;">
+                            <i class="fas fa-paste"></i> 粘贴
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">联系方式</label>
+                    <input type="text" class="form-control" id="newDeviceContact" placeholder="微信号或手机号">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">套餐类型</label>
+                    <select class="form-control" id="newDevicePackage">
+                        <option value="monthly">月卡 (30天)</option>
+                        <option value="quarterly" selected>季卡 (90天)</option>
+                        <option value="yearly">年卡 (365天)</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+                <div class="form-group" id="customDaysGroup" style="display: none;">
+                    <label class="form-label">自定义天数</label>
+                    <input type="number" class="form-control" id="customDays" value="30" min="1" max="3650">
                 </div>
             </div>
-            
-            <div class="form-group">
-                <label>联系方式：</label>
-                <input type="text" id="newDeviceContact" class="form-control" placeholder="微信号或手机号">
-            </div>
-            
-            <div class="form-group">
-                <label>套餐类型：</label>
-                <select id="newDevicePackage" class="form-control">
-                    <option value="monthly">月卡 (30天)</option>
-                    <option value="quarterly" selected>季卡 (90天)</option>
-                    <option value="yearly">年卡 (365天)</option>
-                    <option value="custom">自定义</option>
-                </select>
-            </div>
-            
-            <div class="form-group" id="customDaysGroup" style="display: none;">
-                <label>自定义天数：</label>
-                <input type="number" id="customDays" class="form-control" value="30" min="1" max="3650">
-            </div>
-            
-            <div class="modal-actions">
-                <button class="btn" onclick="closeAddDeviceModal()" style="background: #e2e8f0;">取消</button>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeAddDeviceModal()">取消</button>
                 <button class="btn btn-primary" onclick="addDevice()">确认添加</button>
             </div>
         </div>
@@ -691,63 +715,59 @@
     <!-- 编辑设备模态框 -->
     <div id="editDeviceModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-bottom: 15px; font-size: 16px;">✏️ 编辑设备授权</h3>
-            
-            <div class="device-details" id="deviceDetails">
-                <!-- 设备详情将通过JavaScript动态加载 -->
+            <div class="modal-header">
+                <h2 class="modal-title">编辑设备授权</h2>
+                <button class="modal-close" onclick="closeEditDeviceModal()">&times;</button>
             </div>
-            
-            <div class="form-group">
-                <label>延长至日期：</label>
-                <input type="date" id="extendToDate" class="form-control">
+            <div class="modal-body">
+                <div class="device-details" id="deviceDetails">
+                    <!-- 设备详情将通过JavaScript动态加载 -->
+                </div>
+                <div class="form-group">
+                    <label class="form-label">延长至日期</label>
+                    <input type="date" class="form-control" id="extendToDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">或延长天数</label>
+                    <input type="number" class="form-control" id="extendDays" value="30" min="1" max="3650">
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label>或延长天数：</label>
-                <input type="number" id="extendDays" class="form-control" value="30" min="1" max="3650">
-            </div>
-            
-            <div class="modal-actions">
-                <button class="btn" onclick="closeEditDeviceModal()" style="background: #e2e8f0;">取消</button>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeEditDeviceModal()">取消</button>
                 <button class="btn btn-primary" onclick="updateDevice()">保存修改</button>
                 <button class="btn btn-warning" onclick="extendDevice()">仅延长</button>
             </div>
         </div>
     </div>
 
-    <!-- 删除确认模态框 -->
-    <div id="deleteConfirmModal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 15px; color: var(--danger); font-size: 16px;">⚠️ 删除确认</h3>
-            
-            <div class="device-details" id="deleteDeviceDetails">
-                <!-- 设备详情将通过JavaScript动态加载 -->
-            </div>
-            
-            <div class="delete-confirm">
-                <p style="margin-bottom: 12px; font-size: 14px;">确定要删除此设备吗？此操作不可撤销！</p>
-                <div class="modal-actions">
-                    <button class="btn" onclick="closeDeleteConfirmModal()" style="background: #e2e8f0;">取消</button>
-                    <button class="btn btn-danger" onclick="confirmDeleteDevice()">确认删除</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- 底部导航 -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active">
+            <i class="fas fa-home nav-icon"></i>
+            <span>首页</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-plus-circle nav-icon"></i>
+            <span>添加</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-cog nav-icon"></i>
+            <span>设置</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-user nav-icon"></i>
+            <span>我的</span>
+        </a>
+    </nav>
 
     <script>
         // 设备数据
         let devices = [];
         let currentEditDevice = null;
-        let currentDeleteDevice = null;
-        let config = {
-            demo_url: "https://demo.example.com/api",
-            real_url: "https://real.example.com/api",
-            default_mode: "demo"
-        };
+        let filteredDevices = [];
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            loadConfig();
             loadDevices();
             updateStats();
             
@@ -761,96 +781,48 @@
                 }
             });
 
-            // 防止iOS缩放
-            document.addEventListener('touchstart', function(e) {
-                if (e.touches.length > 1) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
+            // 初始化示例数据
+            if (devices.length === 0) {
+                generateSampleData();
+            }
         });
 
-        // 加载配置文件
-        async function loadConfig() {
-            try {
-                // 这里替换为您的JSON配置文件地址
-                const configUrl = 'https://raw.githubusercontent.com/your-repo/config/main/config.json';
-                const response = await fetch(configUrl);
-                if (response.ok) {
-                    config = await response.json();
-                    updateConfigDisplay();
-                } else {
-                    console.warn('无法加载配置文件，使用默认配置');
+        // 生成示例数据
+        function generateSampleData() {
+            const sampleDevices = [
+                {
+                    id: 1,
+                    device_id: "TV_001234567890",
+                    contact: "13800138000",
+                    package: "季卡",
+                    activate_date: "2024-01-15",
+                    expire_date: "2024-04-15",
+                    status: "active"
+                },
+                {
+                    id: 2,
+                    device_id: "TV_009876543210",
+                    contact: "wechat_12345",
+                    package: "月卡",
+                    activate_date: "2024-02-01",
+                    expire_date: "2024-03-03",
+                    status: "warning"
+                },
+                {
+                    id: 3,
+                    device_id: "TV_005678901234",
+                    contact: "18812345678",
+                    package: "年卡",
+                    activate_date: "2023-12-01",
+                    expire_date: "2024-02-15",
+                    status: "expired"
                 }
-            } catch (error) {
-                console.warn('加载配置文件失败:', error);
-            }
-        }
-
-        // 更新配置显示
-        function updateConfigDisplay() {
-            document.getElementById('demoUrl').textContent = config.demo_url;
-            document.getElementById('realUrl').textContent = config.real_url;
-            document.getElementById('defaultMode').textContent = config.default_mode === 'demo' ? '演示模式' : '真实模式';
-        }
-
-        // 刷新配置
-        function refreshConfig() {
-            loadConfig();
-            showToast('✅ 配置已刷新');
-        }
-
-        // 获取设备应该访问的URL
-        function getDeviceAccessUrl(deviceId) {
-            const device = devices.find(d => d.device_id === deviceId);
-            if (!device) {
-                return config.default_mode === 'demo' ? config.demo_url : config.real_url;
-            }
+            ];
             
-            // 检查设备是否授权（有效期内）
-            const isExpired = new Date(device.expire_date) < new Date();
-            
-            if (isExpired) {
-                // 过期设备访问演示地址
-                return config.demo_url;
-            } else {
-                // 有效设备访问真实地址
-                return config.real_url;
-            }
-        }
-
-        // 生成设备访问令牌（示例）
-        function generateAccessToken(deviceId) {
-            const accessUrl = getDeviceAccessUrl(deviceId);
-            const tokenData = {
-                device_id: deviceId,
-                access_url: accessUrl,
-                timestamp: Date.now(),
-                expire_time: Date.now() + 24 * 60 * 60 * 1000 // 24小时有效
-            };
-            
-            // 在实际应用中，这里应该使用加密算法生成token
-            return btoa(JSON.stringify(tokenData));
-        }
-
-        // 为设备生成访问信息
-        function generateDeviceAccessInfo(deviceId) {
-            const accessUrl = getDeviceAccessUrl(deviceId);
-            const token = generateAccessToken(deviceId);
-            
-            return {
-                device_id: deviceId,
-                access_url: accessUrl,
-                access_token: token,
-                is_authorized: isDeviceAuthorized(deviceId)
-            };
-        }
-
-        // 检查设备是否授权
-        function isDeviceAuthorized(deviceId) {
-            const device = devices.find(d => d.device_id === deviceId);
-            if (!device) return false;
-            
-            return new Date(device.expire_date) >= new Date();
+            devices = sampleDevices;
+            saveDevices();
+            renderDevices();
+            updateStats();
         }
 
         // 加载设备数据
@@ -858,28 +830,8 @@
             const savedDevices = localStorage.getItem('authorized_devices');
             if (savedDevices) {
                 devices = JSON.parse(savedDevices);
-            } else {
-                // 初始化示例数据
-                devices = [
-                    {
-                        device_id: "TV_1234567890",
-                        contact: "13800138000",
-                        package: "季卡",
-                        activate_date: "2024-01-01",
-                        expire_date: "2024-12-31",
-                        status: "active"
-                    },
-                    {
-                        device_id: "TV_0987654321",
-                        contact: "wechat123",
-                        package: "月卡",
-                        activate_date: "2024-01-10",
-                        expire_date: "2024-02-09",
-                        status: "expired"
-                    }
-                ];
-                saveDevices();
             }
+            filteredDevices = [...devices];
             renderDevices();
         }
 
@@ -890,20 +842,21 @@
         }
 
         // 渲染设备列表
-        function renderDevices(filteredDevices = null) {
-            const devicesToRender = filteredDevices || devices;
+        function renderDevices() {
             const devicesList = document.getElementById('devicesList');
-            const deviceCount = document.getElementById('deviceCount');
+            const devicesCount = document.getElementById('devicesCount');
             
-            deviceCount.textContent = devicesToRender.length;
+            devicesCount.textContent = filteredDevices.length;
             
-            if (devicesToRender.length === 0) {
+            if (filteredDevices.length === 0) {
                 devicesList.innerHTML = `
                     <div class="empty-state">
-                        <div>📱</div>
-                        <div style="margin-top: 10px; font-size: 14px;">暂无设备数据</div>
-                        <button class="btn btn-primary" onclick="showAddDeviceModal()" style="margin-top: 15px;">
-                            ➕ 添加第一个设备
+                        <div class="empty-icon">
+                            <i class="fas fa-tv"></i>
+                        </div>
+                        <div class="empty-text">暂无设备数据</div>
+                        <button class="btn btn-primary" onclick="showAddDeviceModal()">
+                            <i class="fas fa-plus"></i> 添加第一个设备
                         </button>
                     </div>
                 `;
@@ -912,62 +865,63 @@
             
             devicesList.innerHTML = '';
             
-            devicesToRender.forEach(device => {
+            filteredDevices.forEach(device => {
                 const isExpired = new Date(device.expire_date) < new Date();
                 const daysRemaining = Math.ceil((new Date(device.expire_date) - new Date()) / (1000 * 60 * 60 * 24));
-                const accessInfo = generateDeviceAccessInfo(device.device_id);
                 
                 let statusClass = 'status-active';
                 let statusText = '有效';
+                let cardClass = '';
                 
                 if (isExpired) {
                     statusClass = 'status-expired';
                     statusText = '已过期';
+                    cardClass = 'expired';
                 } else if (daysRemaining <= 7) {
                     statusClass = 'status-warning';
                     statusText = '即将到期';
+                    cardClass = 'warning';
                 }
                 
-                // 移动端卡片视图
                 const card = document.createElement('div');
-                card.className = 'device-card';
+                card.className = `device-card ${cardClass}`;
                 card.innerHTML = `
-                    <div class="device-info">
+                    <div class="device-header">
                         <div class="device-id">${device.device_id}</div>
-                        <div class="device-meta">
-                            <div>套餐: ${device.package}</div>
-                            <div>联系方式: ${device.contact}</div>
-                            <div>到期: ${device.expire_date}</div>
-                            <div>访问: ${accessInfo.is_authorized ? '真实地址' : '演示地址'}</div>
-                            <span class="status-badge ${statusClass}">${statusText} ${!isExpired ? `${daysRemaining}天` : ''}</span>
+                        <div class="device-status ${statusClass}">${statusText} ${!isExpired ? `${daysRemaining}天` : ''}</div>
+                    </div>
+                    <div class="device-details">
+                        <div class="device-detail">
+                            <div class="detail-label">联系方式</div>
+                            <div class="detail-value">${device.contact}</div>
+                        </div>
+                        <div class="device-detail">
+                            <div class="detail-label">套餐类型</div>
+                            <div class="detail-value">${device.package}</div>
+                        </div>
+                        <div class="device-detail">
+                            <div class="detail-label">激活日期</div>
+                            <div class="detail-value">${device.activate_date}</div>
+                        </div>
+                        <div class="device-detail">
+                            <div class="detail-label">到期日期</div>
+                            <div class="detail-value">${device.expire_date}</div>
                         </div>
                     </div>
-                    <div class="action-buttons">
-                        <button class="btn btn-primary btn-sm" onclick="editDevice('${device.device_id}')">
-                            ✏️ 编辑
+                    <div class="device-actions">
+                        <button class="btn btn-outline" onclick="editDevice(${device.id})">
+                            <i class="fas fa-edit"></i> 编辑
                         </button>
-                        <button class="btn btn-success btn-sm" onclick="showAccessInfo('${device.device_id}')">
-                            🔗 信息
+                        <button class="btn btn-primary" onclick="showDeviceInfo(${device.id})">
+                            <i class="fas fa-info-circle"></i> 详情
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="showDeleteConfirmModal('${device.device_id}')">
-                            🗑️ 删除
+                        <button class="btn btn-danger" onclick="showDeleteConfirm(${device.id})">
+                            <i class="fas fa-trash"></i> 删除
                         </button>
                     </div>
                 `;
                 devicesList.appendChild(card);
             });
-        }
-
-        // 显示设备访问信息
-        function showAccessInfo(deviceId) {
-            const accessInfo = generateDeviceAccessInfo(deviceId);
-            const infoText = `设备访问信息：
-设备ID: ${accessInfo.device_id}
-访问地址: ${accessInfo.access_url}
-授权状态: ${accessInfo.is_authorized ? '已授权' : '未授权'}
-访问令牌: ${accessInfo.access_token}`;
-            
-            alert(infoText);
         }
 
         // 更新统计信息
@@ -993,16 +947,15 @@
             const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
             
             if (!searchTerm) {
-                renderDevices();
-                return;
+                filteredDevices = [...devices];
+            } else {
+                filteredDevices = devices.filter(device => 
+                    device.device_id.toLowerCase().includes(searchTerm) ||
+                    device.contact.toLowerCase().includes(searchTerm)
+                );
             }
             
-            const filteredDevices = devices.filter(device => 
-                device.device_id.toLowerCase().includes(searchTerm) ||
-                device.contact.toLowerCase().includes(searchTerm)
-            );
-            
-            renderDevices(filteredDevices);
+            renderDevices();
         }
 
         // 粘贴设备ID
@@ -1010,19 +963,18 @@
             if (navigator.clipboard && navigator.clipboard.readText) {
                 navigator.clipboard.readText().then(text => {
                     document.getElementById('newDeviceId').value = text;
-                    showToast('✅ 设备ID已粘贴');
+                    showToast('设备ID已粘贴');
                 }).catch(err => {
-                    showToast('❌ 无法读取剪贴板内容');
+                    showToast('无法读取剪贴板内容');
                 });
             } else {
-                showToast('❌ 浏览器不支持剪贴板功能');
+                showToast('浏览器不支持剪贴板功能');
             }
         }
 
         // 显示添加设备模态框
         function showAddDeviceModal() {
             document.getElementById('addDeviceModal').style.display = 'flex';
-            // 重置表单
             document.getElementById('newDeviceId').value = '';
             document.getElementById('newDeviceContact').value = '';
             document.getElementById('newDevicePackage').value = 'quarterly';
@@ -1074,6 +1026,7 @@
             
             // 添加新设备
             const newDevice = {
+                id: Date.now(),
                 device_id: deviceId,
                 contact: contact,
                 package: packageName,
@@ -1083,16 +1036,17 @@
             };
             
             devices.unshift(newDevice);
+            filteredDevices = [...devices];
             saveDevices();
             renderDevices();
             closeAddDeviceModal();
             
-            showToast(`✅ 设备 ${deviceId} 添加成功`);
+            showToast(`设备 ${deviceId} 添加成功`);
         }
 
         // 编辑设备
         function editDevice(deviceId) {
-            const device = devices.find(d => d.device_id === deviceId);
+            const device = devices.find(d => d.id === deviceId);
             if (!device) return;
             
             currentEditDevice = device;
@@ -1100,7 +1054,6 @@
             // 显示设备详情
             const isExpired = new Date(device.expire_date) < new Date();
             const daysRemaining = Math.ceil((new Date(device.expire_date) - new Date()) / (1000 * 60 * 60 * 24));
-            const accessInfo = generateDeviceAccessInfo(deviceId);
             
             let statusText = '有效';
             if (isExpired) {
@@ -1110,33 +1063,31 @@
             }
             
             document.getElementById('deviceDetails').innerHTML = `
-                <div class="row">
-                    <span class="label">设备ID:</span>
-                    <span class="value">${device.device_id}</span>
-                </div>
-                <div class="row">
-                    <span class="label">联系方式:</span>
-                    <span class="value">${device.contact}</span>
-                </div>
-                <div class="row">
-                    <span class="label">套餐类型:</span>
-                    <span class="value">${device.package}</span>
-                </div>
-                <div class="row">
-                    <span class="label">激活日期:</span>
-                    <span class="value">${device.activate_date}</span>
-                </div>
-                <div class="row">
-                    <span class="label">到期日期:</span>
-                    <span class="value">${device.expire_date}</span>
-                </div>
-                <div class="row">
-                    <span class="label">状态:</span>
-                    <span class="value">${statusText} ${!isExpired ? `(剩余 ${daysRemaining} 天)` : ''}</span>
-                </div>
-                <div class="row">
-                    <span class="label">访问地址:</span>
-                    <span class="value">${accessInfo.access_url}</span>
+                <div class="device-details">
+                    <div class="device-detail">
+                        <div class="detail-label">设备ID</div>
+                        <div class="detail-value">${device.device_id}</div>
+                    </div>
+                    <div class="device-detail">
+                        <div class="detail-label">联系方式</div>
+                        <div class="detail-value">${device.contact}</div>
+                    </div>
+                    <div class="device-detail">
+                        <div class="detail-label">套餐类型</div>
+                        <div class="detail-value">${device.package}</div>
+                    </div>
+                    <div class="device-detail">
+                        <div class="detail-label">激活日期</div>
+                        <div class="detail-value">${device.activate_date}</div>
+                    </div>
+                    <div class="device-detail">
+                        <div class="detail-label">到期日期</div>
+                        <div class="detail-value">${device.expire_date}</div>
+                    </div>
+                    <div class="device-detail">
+                        <div class="detail-label">状态</div>
+                        <div class="detail-value">${statusText} ${!isExpired ? `(剩余 ${daysRemaining} 天)` : ''}</div>
+                    </div>
                 </div>
             `;
             
@@ -1171,10 +1122,11 @@
             }
             
             saveDevices();
+            filteredDevices = [...devices];
             renderDevices();
             closeEditDeviceModal();
             
-            showToast('✅ 设备信息更新成功');
+            showToast('设备信息更新成功');
         }
 
         // 延长设备
@@ -1193,57 +1145,52 @@
             }
             
             saveDevices();
+            filteredDevices = [...devices];
             renderDevices();
             closeEditDeviceModal();
             
-            showToast(`✅ 设备已延长`);
+            showToast(`设备已延长`);
         }
 
-        // 显示删除确认模态框
-        function showDeleteConfirmModal(deviceId) {
-            const device = devices.find(d => d.device_id === deviceId);
+        // 显示设备信息
+        function showDeviceInfo(deviceId) {
+            const device = devices.find(d => d.id === deviceId);
             if (!device) return;
             
-            currentDeleteDevice = device;
+            const isExpired = new Date(device.expire_date) < new Date();
+            const daysRemaining = Math.ceil((new Date(device.expire_date) - new Date()) / (1000 * 60 * 60 * 24));
             
-            document.getElementById('deleteDeviceDetails').innerHTML = `
-                <div class="row">
-                    <span class="label">设备ID:</span>
-                    <span class="value">${device.device_id}</span>
-                </div>
-                <div class="row">
-                    <span class="label">联系方式:</span>
-                    <span class="value">${device.contact}</span>
-                </div>
-                <div class="row">
-                    <span class="label">套餐类型:</span>
-                    <span class="value">${device.package}</span>
-                </div>
-                <div class="row">
-                    <span class="label">到期日期:</span>
-                    <span class="value">${device.expire_date}</span>
-                </div>
-            `;
+            let statusText = '有效';
+            if (isExpired) {
+                statusText = '已过期';
+            } else if (daysRemaining <= 7) {
+                statusText = '即将到期';
+            }
             
-            document.getElementById('deleteConfirmModal').style.display = 'flex';
+            const infoText = `设备详细信息：
+设备ID: ${device.device_id}
+联系方式: ${device.contact}
+套餐类型: ${device.package}
+激活日期: ${device.activate_date}
+到期日期: ${device.expire_date}
+状态: ${statusText} ${!isExpired ? `(剩余 ${daysRemaining} 天)` : ''}`;
+            
+            alert(infoText);
         }
 
-        // 关闭删除确认模态框
-        function closeDeleteConfirmModal() {
-            document.getElementById('deleteConfirmModal').style.display = 'none';
-            currentDeleteDevice = null;
-        }
-
-        // 确认删除设备
-        function confirmDeleteDevice() {
-            if (!currentDeleteDevice) return;
+        // 显示删除确认
+        function showDeleteConfirm(deviceId) {
+            const device = devices.find(d => d.id === deviceId);
+            if (!device) return;
             
-            devices = devices.filter(device => device.device_id !== currentDeleteDevice.device_id);
-            saveDevices();
-            renderDevices();
-            closeDeleteConfirmModal();
-            
-            showToast('✅ 设备已删除');
+            if (confirm(`确定要删除设备 ${device.device_id} 吗？此操作不可撤销！`)) {
+                devices = devices.filter(d => d.id !== deviceId);
+                filteredDevices = [...devices];
+                saveDevices();
+                renderDevices();
+                
+                showToast('设备已删除');
+            }
         }
 
         // 清理过期设备
@@ -1257,18 +1204,16 @@
                 return;
             }
             
-            if (!confirm(`确定要删除 ${expiredDevices.length} 个过期设备吗？`)) {
-                return;
+            if (confirm(`确定要删除 ${expiredDevices.length} 个过期设备吗？`)) {
+                devices = devices.filter(device => 
+                    new Date(device.expire_date) >= new Date()
+                );
+                filteredDevices = [...devices];
+                saveDevices();
+                renderDevices();
+                
+                showToast(`已清理 ${expiredDevices.length} 个过期设备`);
             }
-            
-            devices = devices.filter(device => 
-                new Date(device.expire_date) >= new Date()
-            );
-            
-            saveDevices();
-            renderDevices();
-            
-            showToast(`✅ 已清理 ${expiredDevices.length} 个过期设备`);
         }
 
         // 导出数据
@@ -1283,26 +1228,55 @@
             link.click();
             document.body.removeChild(link);
             
-            showToast('✅ 数据导出成功');
+            showToast('数据导出成功');
         }
 
         // 刷新数据
         function refreshData() {
-            renderDevices();
-            updateStats();
-            showToast('✅ 数据已刷新');
+            loadDevices();
+            showToast('数据已刷新');
         }
 
         // 显示Toast提示
         function showToast(message) {
+            // 创建Toast元素
             const toast = document.createElement('div');
-            toast.className = 'toast';
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--dark);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 10px;
+                z-index: 10000;
+                font-size: 14px;
+                text-align: center;
+                max-width: 80%;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: toastAppear 0.3s ease;
+            `;
+            
+            // 添加动画
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes toastAppear {
+                    from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+                }
+            `;
+            document.head.appendChild(style);
+            
             toast.textContent = message;
             document.body.appendChild(toast);
             
             setTimeout(() => {
                 if (toast.parentNode) {
                     toast.remove();
+                }
+                if (style.parentNode) {
+                    style.remove();
                 }
             }, 3000);
         }
@@ -1311,7 +1285,6 @@
         window.onclick = function(event) {
             const addModal = document.getElementById('addDeviceModal');
             const editModal = document.getElementById('editDeviceModal');
-            const deleteModal = document.getElementById('deleteConfirmModal');
             
             if (event.target === addModal) {
                 closeAddDeviceModal();
@@ -1319,17 +1292,7 @@
             if (event.target === editModal) {
                 closeEditDeviceModal();
             }
-            if (event.target === deleteModal) {
-                closeDeleteConfirmModal();
-            }
         }
-
-        // 触摸事件处理
-        document.addEventListener('touchmove', function(e) {
-            if (e.scale !== 1) {
-                e.preventDefault();
-            }
-        }, { passive: false });
     </script>
 </body>
 </html>
