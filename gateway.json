@@ -34,7 +34,7 @@
         
         if (isAuthorized) {
             // 已授权 - 重定向到完整接口
-            window.location.href = 'https://gitee.com/yanglong1251/tv-box/raw/master/ok.bmp?device_id=' + encodeURIComponent(deviceId);
+            window.location.href = 'https://13035.kstore.space/tv.txt?device_id=' + encodeURIComponent(deviceId);
         } else {
             // 未授权 - 重定向到受限接口
             window.location.href = 'https://gitee.com/yanglong1251/tv-box/raw/master/cangku.bmp?device_id=' + encodeURIComponent(deviceId);
