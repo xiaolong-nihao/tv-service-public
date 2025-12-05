@@ -6,114 +6,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 20px; }
         
         .container { max-width: 500px; margin: 0 auto; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         
         .header { text-align: center; margin-bottom: 25px; }
-        .header h1 { color: #1890ff; margin-bottom: 10px; }
-        .header p { color: #666; }
+        .header h1 { color: #1890ff; margin-bottom: 10px; font-size: 24px; }
+        .header p { color: #666; font-size: 14px; }
         
         .info-card { background: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #1890ff; }
         .info-item { display: flex; margin-bottom: 10px; }
-        .info-label { width: 100px; color: #666; }
-        .info-value { flex: 1; color: #333; font-weight: bold; }
+        .info-label { width: 100px; color: #666; font-size: 14px; }
+        .info-value { flex: 1; color: #333; font-weight: 600; font-size: 14px; }
         
         .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
-        .input-group input, .input-group textarea { 
+        .input-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; font-size: 15px; }
+        
+        /* 修复激活码输入框样式 - 移除可能造成空格效果的元素 */
+        .input-group textarea { 
             width: 100%; 
-            padding: 15px; 
-            border: 2px solid #e8e8e8; 
+            padding: 12px 15px; 
+            border: 1px solid #d9d9d9; 
             border-radius: 8px; 
             font-size: 16px; 
-            transition: all 0.3s; 
+            transition: all 0.2s ease; 
             resize: none;
             overflow: hidden;
             min-height: 60px;
-            max-height: 200px;
-            line-height: 1.5;
-            font-family: 'Courier New', monospace;
-            white-space: pre-wrap;
+            max-height: 300px;
+            line-height: 1.4; /* 调整为更紧凑的行高 */
+            font-family: 'Roboto Mono', 'Consolas', 'Monaco', monospace; /* 使用更清晰的等宽字体 */
+            white-space: pre;
             word-wrap: break-word;
+            background-color: #fff;
+            color: #333;
+            box-shadow: none;
+            letter-spacing: 0; /* 确保字母间距为0 */
         }
-        .input-group input:focus, .input-group textarea:focus { 
+        
+        .input-group textarea:focus { 
             border-color: #1890ff; 
+            border-width: 2px;
             outline: none; 
-            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+            box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+            background-color: #fff;
         }
         
         .code-info {
             margin-top: 8px;
-            font-size: 14px;
+            font-size: 13px;
             color: #666;
             text-align: right;
+            font-family: Arial, sans-serif;
         }
         
-        /* 激活码样式状态 */
-        .highlight-code {
-            background: linear-gradient(90deg, #f0f7ff, #e6f7ff);
-            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-        }
+        /* 激活码样式状态 - 简化 */
         .code-valid { border-color: #52c41a !important; }
         .code-invalid { border-color: #ff4d4f !important; }
         .code-warning { border-color: #faad14 !important; }
+        
+        /* 移除可能导致视觉空格的背景渐变 */
+        .highlight-code {
+            background-color: #fafafa;
+        }
         
         /* 滚动条样式 */
         .scrollable {
             overflow-y: auto !important;
         }
         .scrollable::-webkit-scrollbar {
-            width: 6px;
+            width: 4px;
         }
         .scrollable::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
+            background: #f8f9fa;
+            border-radius: 2px;
         }
         .scrollable::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 3px;
-        }
-        .scrollable::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
+            background: #d9d9d9;
+            border-radius: 2px;
         }
         
         .btn { 
             display: block; 
             width: 100%; 
-            padding: 18px; 
-            background: linear-gradient(135deg, #1890ff, #096dd9); 
+            padding: 14px; 
+            background: #1890ff; 
             color: white; 
             border: none; 
             border-radius: 8px; 
-            font-size: 18px; 
-            font-weight: bold; 
+            font-size: 16px; 
+            font-weight: 600; 
             cursor: pointer; 
             margin: 15px 0; 
             text-align: center;
+            transition: all 0.2s ease;
         }
-        .btn:hover { opacity: 0.9; }
-        .btn.secondary { background: linear-gradient(135deg, #52c41a, #389e0d); }
-        .btn.warning { background: linear-gradient(135deg, #faad14, #d48806); }
+        .btn:hover { 
+            background: #096dd9;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        .btn.secondary { background: #52c41a; }
+        .btn.secondary:hover { background: #389e0d; }
         .btn:disabled { 
-            background: linear-gradient(135deg, #cccccc, #aaaaaa);
+            background: #d9d9d9;
             cursor: not-allowed;
-            opacity: 0.6;
+            transform: none;
+            box-shadow: none;
         }
         
         .result { 
             margin-top: 20px; 
-            padding: 15px; 
+            padding: 12px 15px; 
             border-radius: 8px; 
             display: none; 
-            line-height: 1.6;
+            line-height: 1.5;
+            font-size: 14px;
         }
         .success { background: #f6ffed; border: 1px solid #b7eb8f; color: #52c41a; }
         .error { background: #fff2f0; border: 1px solid #ffccc7; color: #ff4d4f; }
         .info { background: #e6f7ff; border: 1px solid #91d5ff; color: #1890ff; }
         
-        .loading { text-align: center; padding: 30px; display: none; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1890ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        .loading { text-align: center; padding: 25px; display: none; }
+        .spinner { width: 32px; height: 32px; border: 3px solid #f3f3f3; border-top: 3px solid #1890ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 12px; }
         
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -124,11 +139,11 @@
             background: #fff7e6; 
             border: 1px solid #ffd591; 
             border-radius: 8px; 
-            padding: 15px; 
+            padding: 12px 15px; 
             margin-top: 20px; 
             color: #d46b08; 
-            font-size: 14px; 
-            line-height: 1.6;
+            font-size: 13px; 
+            line-height: 1.5;
         }
         
         .hidden { display: none; }
@@ -137,10 +152,32 @@
             background: #e6f7ff;
             border: 1px solid #91d5ff;
             border-radius: 6px;
-            padding: 10px 15px;
-            margin-top: 10px;
-            font-size: 14px;
+            padding: 8px 12px;
+            margin-top: 8px;
+            font-size: 13px;
             color: #1890ff;
+        }
+        
+        /* 自定义placeholder样式 */
+        .custom-placeholder {
+            position: absolute;
+            top: 12px;
+            left: 15px;
+            right: 15px;
+            color: #999;
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+            line-height: 1.4;
+            white-space: pre;
+            pointer-events: none;
+            z-index: 1;
+            background: transparent;
+        }
+        
+        /* 紧凑布局 */
+        .compact {
+            letter-spacing: 0;
+            word-spacing: 0;
         }
     </style>
 </head>
@@ -152,7 +189,7 @@
         </div>
         
         <div class="info-card">
-            <h3>设备信息</h3>
+            <h3 style="margin-bottom: 15px; font-size: 16px;">设备信息</h3>
             <div class="info-item">
                 <div class="info-label">电视IP:</div>
                 <div class="info-value" id="tv-ip">正在获取...</div>
@@ -174,11 +211,13 @@
             <textarea 
                 id="activation-code" 
                 rows="1"
-                placeholder="请粘贴你的激活码"
+                class="compact"
+                placeholder=" "
                 autocomplete="off"
                 autocorrect="off"
                 autocapitalize="off"
-                spellcheck="false">
+                spellcheck="false"
+                inputmode="text">
             </textarea>
             <div class="code-info">
                 <span id="char-count">0</span> 个字符
@@ -262,6 +301,35 @@
             statusDiv.innerHTML = `<span style="color: ${color};">${message}</span>`;
         }
         
+        // 设置多行placeholder（简化版）
+        function setupPlaceholder() {
+            const textarea = document.getElementById('activation-code');
+            
+            // 创建自定义的placeholder层
+            const placeholderDiv = document.createElement('div');
+            placeholderDiv.className = 'custom-placeholder';
+            placeholderDiv.innerHTML = '请粘贴你的激活码（支持多行输入，每行一个激活码）';
+            
+            // 包装textarea
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            textarea.parentNode.insertBefore(wrapper, textarea);
+            wrapper.appendChild(textarea);
+            wrapper.appendChild(placeholderDiv);
+            
+            // 监听输入事件
+            function updatePlaceholder() {
+                placeholderDiv.style.display = textarea.value ? 'none' : 'block';
+            }
+            
+            textarea.addEventListener('input', updatePlaceholder);
+            textarea.addEventListener('focus', updatePlaceholder);
+            textarea.addEventListener('blur', updatePlaceholder);
+            
+            // 初始状态
+            updatePlaceholder();
+        }
+        
         // 自动调整文本框高度
         function autoResizeTextarea() {
             const textarea = document.getElementById('activation-code');
@@ -275,7 +343,7 @@
             // 计算内容高度
             const scrollHeight = textarea.scrollHeight;
             const minHeight = 60; // 最小高度
-            const maxHeight = 300; // 增加最大高度
+            const maxHeight = 300; // 最大高度
             
             // 限制高度范围
             let newHeight = Math.max(minHeight, Math.min(scrollHeight, maxHeight));
@@ -320,6 +388,7 @@
             textarea.classList.remove('highlight-code', 'code-valid', 'code-invalid', 'code-warning');
             
             if (charCount === 0) {
+                textarea.classList.remove('highlight-code');
                 return;
             }
             
@@ -331,7 +400,6 @@
             
             if (codes.length === 0) return;
             
-            let allValid = true;
             let hasInvalid = false;
             let hasWarning = false;
             
@@ -447,13 +515,12 @@
             
             // 如果参数中没有，尝试从二维码内容解析
             if (!sessionId && !tvIp) {
-                // 尝试解析当前URL的hash部分
                 const hash = window.location.hash.substring(1);
                 if (hash) {
                     const parts = hash.split(':');
                     if (parts.length >= 2) {
                         sessionId = parts[0];
-                        tvIp = '255.255.255.255'; // 广播地址
+                        tvIp = '255.255.255.255';
                     }
                 }
             }
@@ -461,6 +528,9 @@
             // 显示设备信息
             document.getElementById('session-id').textContent = sessionId || '未识别';
             document.getElementById('tv-ip').textContent = tvIp || '广播模式';
+            
+            // 设置placeholder
+            setupPlaceholder();
             
             // 自动测试连接
             if (sessionId) {
@@ -483,8 +553,6 @@
             
             try {
                 const sessionId = document.getElementById('session-id').textContent;
-                
-                // 尝试发送测试数据
                 const result = await sendUdpData(sessionId + ':TEST', '255.255.255.255', 8888);
                 
                 if (result.success) {
@@ -514,7 +582,6 @@
             const activationCode = document.getElementById('activation-code').value.trim();
             const tvIp = document.getElementById('tv-ip').textContent;
             
-            // 分割多行激活码
             const codes = activationCode.split('\n').filter(line => line.trim());
             
             if (codes.length === 0) {
@@ -530,37 +597,28 @@
                 let successCount = 0;
                 let failCount = 0;
                 
-                // 逐个发送激活码
                 for (let i = 0; i < codes.length; i++) {
                     const singleCode = codes[i].trim();
                     
-                    // 更新加载提示
                     if (codes.length > 1) {
                         document.getElementById('loading-text').textContent = 
                             `正在发送激活码 ${i + 1}/${codes.length}...`;
                     }
                     
-                    // 构造发送数据：SESSION_ID:ACTIVATION_CODE
                     const data = sessionId + ':' + singleCode;
-                    
-                    // 发送UDP数据
                     const result = await sendUdpData(data, tvIp, 8888);
                     
                     if (result.success) {
                         successCount++;
                         
-                        // 单激活码立即显示成功
                         if (codes.length === 1) {
                             showResult('✅ 激活码发送成功！<br>电视正在验证，请查看电视屏幕...', 'success');
                             updateStatus('激活码已发送 ✓', '#52c41a');
-                            
-                            // 清空输入框
                             document.getElementById('activation-code').value = '';
                             autoResizeTextarea();
                             localStorage.removeItem('last_activation_code');
                         }
                         
-                        // 延迟发送下一个（如果有多个）
                         if (i < codes.length - 1) {
                             await new Promise(resolve => setTimeout(resolve, 500));
                         }
@@ -574,13 +632,10 @@
                     }
                 }
                 
-                // 多激活码结果汇总
                 if (codes.length > 1) {
                     if (successCount === codes.length) {
                         showResult(`✅ 成功发送 ${successCount} 个激活码！<br>电视正在验证，请查看电视屏幕...`, 'success');
                         updateStatus('所有激活码已发送 ✓', '#52c41a');
-                        
-                        // 清空输入框
                         document.getElementById('activation-code').value = '';
                         autoResizeTextarea();
                         localStorage.removeItem('last_activation_code');
@@ -593,7 +648,6 @@
                     }
                 }
                 
-                // 3秒后跳转
                 if (successCount > 0) {
                     setTimeout(() => {
                         window.location.href = 'about:blank';
@@ -612,12 +666,9 @@
         function sendUdpData(data, ip, port) {
             return new Promise((resolve) => {
                 try {
-                    // 模拟发送成功（实际使用时需要替换为真实UDP发送逻辑）
                     console.log('发送UDP数据:', { data, ip, port });
                     
-                    // 模拟网络延迟
                     setTimeout(() => {
-                        // 模拟成功率90%
                         const success = Math.random() > 0.1;
                         resolve({ 
                             success: success, 
@@ -636,13 +687,11 @@
         
         // 添加快捷键支持
         document.addEventListener('keydown', function(e) {
-            // Ctrl+Enter 发送激活码
             if (e.ctrlKey && e.key === 'Enter') {
                 e.preventDefault();
                 sendActivation();
             }
             
-            // Esc 清空输入框
             if (e.key === 'Escape') {
                 document.getElementById('activation-code').value = '';
                 autoResizeTextarea();
