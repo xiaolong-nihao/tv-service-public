@@ -22,7 +22,7 @@
         .input-group { margin-bottom: 20px; }
         .input-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; font-size: 15px; }
         
-        /* 修复激活码输入框样式 - 移除可能造成空格效果的元素 */
+        /* 修复激活码输入框样式 */
         .input-group textarea { 
             width: 100%; 
             padding: 12px 15px; 
@@ -34,14 +34,14 @@
             overflow: hidden;
             min-height: 60px;
             max-height: 300px;
-            line-height: 1.4; /* 调整为更紧凑的行高 */
-            font-family: 'Roboto Mono', 'Consolas', 'Monaco', monospace; /* 使用更清晰的等宽字体 */
+            line-height: 1.4;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
             white-space: pre;
             word-wrap: break-word;
             background-color: #fff;
             color: #333;
             box-shadow: none;
-            letter-spacing: 0; /* 确保字母间距为0 */
+            letter-spacing: 0;
         }
         
         .input-group textarea:focus { 
@@ -49,7 +49,6 @@
             border-width: 2px;
             outline: none; 
             box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
-            background-color: #fff;
         }
         
         .code-info {
@@ -60,15 +59,10 @@
             font-family: Arial, sans-serif;
         }
         
-        /* 激活码样式状态 - 简化 */
+        /* 激活码样式状态 */
         .code-valid { border-color: #52c41a !important; }
         .code-invalid { border-color: #ff4d4f !important; }
         .code-warning { border-color: #faad14 !important; }
-        
-        /* 移除可能导致视觉空格的背景渐变 */
-        .highlight-code {
-            background-color: #fafafa;
-        }
         
         /* 滚动条样式 */
         .scrollable {
@@ -157,28 +151,6 @@
             font-size: 13px;
             color: #1890ff;
         }
-        
-        /* 自定义placeholder样式 */
-        .custom-placeholder {
-            position: absolute;
-            top: 12px;
-            left: 15px;
-            right: 15px;
-            color: #999;
-            font-size: 16px;
-            font-family: Arial, sans-serif;
-            line-height: 1.4;
-            white-space: pre;
-            pointer-events: none;
-            z-index: 1;
-            background: transparent;
-        }
-        
-        /* 紧凑布局 */
-        .compact {
-            letter-spacing: 0;
-            word-spacing: 0;
-        }
     </style>
 </head>
 <body>
@@ -211,8 +183,7 @@
             <textarea 
                 id="activation-code" 
                 rows="1"
-                class="compact"
-                placeholder=" "
+                placeholder="请粘贴你的激活码"
                 autocomplete="off"
                 autocorrect="off"
                 autocapitalize="off"
@@ -301,35 +272,6 @@
             statusDiv.innerHTML = `<span style="color: ${color};">${message}</span>`;
         }
         
-        // 设置多行placeholder（简化版）
-        function setupPlaceholder() {
-            const textarea = document.getElementById('activation-code');
-            
-            // 创建自定义的placeholder层
-            const placeholderDiv = document.createElement('div');
-            placeholderDiv.className = 'custom-placeholder';
-            placeholderDiv.innerHTML = '请粘贴你的激活码（支持多行输入，每行一个激活码）';
-            
-            // 包装textarea
-            const wrapper = document.createElement('div');
-            wrapper.style.position = 'relative';
-            textarea.parentNode.insertBefore(wrapper, textarea);
-            wrapper.appendChild(textarea);
-            wrapper.appendChild(placeholderDiv);
-            
-            // 监听输入事件
-            function updatePlaceholder() {
-                placeholderDiv.style.display = textarea.value ? 'none' : 'block';
-            }
-            
-            textarea.addEventListener('input', updatePlaceholder);
-            textarea.addEventListener('focus', updatePlaceholder);
-            textarea.addEventListener('blur', updatePlaceholder);
-            
-            // 初始状态
-            updatePlaceholder();
-        }
-        
         // 自动调整文本框高度
         function autoResizeTextarea() {
             const textarea = document.getElementById('activation-code');
@@ -385,15 +327,11 @@
             const textarea = document.getElementById('activation-code');
             
             // 移除所有样式类
-            textarea.classList.remove('highlight-code', 'code-valid', 'code-invalid', 'code-warning');
+            textarea.classList.remove('code-valid', 'code-invalid', 'code-warning');
             
             if (charCount === 0) {
-                textarea.classList.remove('highlight-code');
                 return;
             }
-            
-            // 添加高亮
-            textarea.classList.add('highlight-code');
             
             // 分割多行验证
             const codes = content.split('\n').filter(line => line.trim());
@@ -434,6 +372,9 @@
         // 初始化文本框监听器
         function initTextareaListeners() {
             const textarea = document.getElementById('activation-code');
+            
+            // 清空可能存在的默认值
+            textarea.value = '';
             
             // 输入时调整高度
             textarea.addEventListener('input', function() {
@@ -529,16 +470,13 @@
             document.getElementById('session-id').textContent = sessionId || '未识别';
             document.getElementById('tv-ip').textContent = tvIp || '广播模式';
             
-            // 设置placeholder
-            setupPlaceholder();
+            // 初始化文本框监听器（这会清空默认值）
+            initTextareaListeners();
             
             // 自动测试连接
             if (sessionId) {
                 setTimeout(testConnection, 500);
             }
-            
-            // 初始化文本框监听器
-            initTextareaListeners();
             
             // 激活码输入框自动聚焦
             setTimeout(() => {
