@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>激活码推送</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; }
+        button { background: #007bff; color: white; border: none; }
+        #result { padding: 15px; margin: 15px 0; display: none; }
+    </style>
+</head>
+<body>
+    <h2>激活码推送</h2>
+    <input type="text" id="code" placeholder="粘贴激活码">
+    <button onclick="send()">推送到电视</button>
+    <div id="result"></div>
+    
+    <script>
+        function send() {
+            const code = document.getElementById('code').value;
+            const params = new URLSearchParams(window.location.search);
+            const session = params.get('session') || '';
+            const port = params.get('port') || '8888';
+            
+            // 发送UDP数据（通过WebSocket模拟）
+            const data = session + ':' + code;
+            const ws = new WebSocket('ws://' + getLocalIP() + ':' + port);
+            
+            ws.onopen = () => {
+                ws.send(data);
+                showResult('发送成功！', 'green');
+            };
+            
+            ws.onerror = () => {
+                showResult('发送失败，请检查网络', 'red');
+            };
+        }
+        
+        function getLocalIP() {
+            // 获取局域网广播地址
+            return '255.255.255.255';
+        }
+        
+        function showResult(msg, color) {
+            const div = document.getElementById('result');
+            div.innerHTML = msg;
+            div.style.color = color;
+            div.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
